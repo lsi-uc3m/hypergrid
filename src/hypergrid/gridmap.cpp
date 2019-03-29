@@ -13,11 +13,6 @@ GridMap::GridMap() :
     map_frame_id_ = "";
 }
 
-GridMap::GridMap(const nav_msgs::OccupancyGridConstPtr map_msg)
-{
-    // TODO
-}
-
 GridMap::GridMap(double width, double height, double cell_size,
                  geometry_msgs::Pose origin, std::string map_frame_id) :
     origin_(origin)
@@ -36,13 +31,33 @@ GridMap::GridMap(double width, double height, double cell_size,
     }
     int width_cells = width_ / cell_size_;
     int height_cells = height_ / cell_size_;
-    grid_ = af::constant(Label::UNKNOWN, width_cells, height_cells, s32);
+    grid = af::constant((int)Label::UNKNOWN, width_cells, height_cells, s32);
 }
+
+GridMap::GridMap(const nav_msgs::OccupancyGrid map_msg)
+{
+    map_frame_id_ = map_msg.header.frame_id;
+    origin_ = map_msg.info.origin;
+    cell_size_ = map_msg.info.resolution;
+    width_ = map_msg.info.width * cell_size_;
+    height_ = map_msg.info.height * cell_size_;
+
+    // Convert the 8 bit data from the ROS msg to 32 bits
+    int32_t* array_data = new int32_t[map_msg.data.size()];
+    for (int i = 0; i < map_msg.data.size(); ++i)
+    {
+        array_data[i] = map_msg.data[i];
+    }
+
+    grid = af::array(map_msg.info.width, map_msg.info.height, array_data, afHost);
+}
+
+GridMap::GridMap(const nav_msgs::OccupancyGridConstPtr map_msg) : GridMap(*map_msg){}
 
 /* Copy constructor */
 GridMap::GridMap(const GridMap& other_map)
 {
-    grid_ = other_map.getGrid();
+    grid = other_map.grid;
     origin_ = other_map.getOrigin();
     width_ = other_map.getWidth();
     height_ = other_map.getHeight();
@@ -52,7 +67,7 @@ GridMap::GridMap(const GridMap& other_map)
 
 /* Move constructor */
 GridMap::GridMap(GridMap&& other_map) noexcept :
-    grid_(std::move(other_map.getGrid())),
+    grid(std::move(other_map.grid)),
     map_frame_id_(std::move(other_map.getMapFrameId()))
 
 {
@@ -69,7 +84,7 @@ GridMap& GridMap::operator = (const GridMap& other_map)
     // check for self-assignment
     if(&other_map == this) return *this;
 
-    grid_ = other_map.getGrid();
+    grid = other_map.grid;
     origin_ = other_map.getOrigin();
     this->width_ = other_map.getWidth();
     this->height_ = other_map.getHeight();
@@ -83,13 +98,40 @@ GridMap& GridMap::operator = (const GridMap& other_map)
 /* Convert to ROS nav_msgs::OccupancyGrid msg */
 void GridMap::toMapMsg(nav_msgs::OccupancyGrid& map_msg)
 {
-    // TODO
+    map_msg = toMapMsg();
 }
 
 /* Convert to ROS nav_msgs::OccupancyGrid msg */
-nav_msgs::OccupancyGrid toMapMsg()
+nav_msgs::OccupancyGrid GridMap::toMapMsg()
 {
-    // TODO
+    nav_msgs::OccupancyGrid map_msg;
+    map_msg.header.stamp = ros::Time::now();
+    map_msg.header.frame_id = map_frame_id_;
+
+    nav_msgs::MapMetaData map_info;
+    map_info.map_load_time = map_msg.header.stamp;
+    map_info.resolution = cell_size_;
+    map_info.width = grid.dims(0);
+    map_info.height = grid.dims(1);
+
+    // Set the map origin pose
+    map_info.origin = origin_;
+    map_msg.info = map_info;
+
+    // Get the data from the device to a host pointer
+    int32_t* array_data = grid.host<int32_t>();
+
+    size_t total_size = grid.dims(0) * grid.dims(1);
+    map_msg.data.resize(total_size);
+
+    // Perform a casting from 32 bit to 8
+    for (int i = 0; i < total_size; ++i)
+    {
+        map_msg.data[i] = array_data[i] & 0xFF;
+    }
+
+    delete[] array_data;
+    return map_msg;
 }
 
 /* Resize the map to a different resolution (size in meters remains, number of cells changes) */

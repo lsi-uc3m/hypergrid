@@ -33,10 +33,11 @@ public:
 
     /* Constructors */
     GridMap();
-    GridMap(const nav_msgs::OccupancyGridConstPtr map_msg);
     GridMap(double width, double height, double cell_size,
              geometry_msgs::Pose origin = geometry_msgs::Pose(),
              std::string map_frame_id = "base_footprint");
+    GridMap(const nav_msgs::OccupancyGrid map_msg);
+    GridMap(const nav_msgs::OccupancyGridConstPtr map_msg);
     /* Copy constructor */
     GridMap(const GridMap& other_map);
     /* Move constructor */
@@ -45,7 +46,7 @@ public:
     GridMap& operator = (const GridMap& other_point);
 
     /* Bool conversion operator to check if the map has been initialized */
-    inline explicit operator bool() const {return !grid_.isempty();}
+    inline explicit operator bool() const {return !grid.isempty();}
 
     /* Convert to ROS nav_msgs::OccupancyGrid msg */
     void toMapMsg(nav_msgs::OccupancyGrid& map_msg);
@@ -60,9 +61,6 @@ public:
     void clear();
 
     /* Return a copy of the grid matrix */
-    inline af::array getGrid() const {return grid_.copy();}
-    inline af::array getGrid() {return grid_;}
-
     inline double getWidth() const {return width_;}
     inline double getHeight() const {return height_;}
     inline double getCellSize() const {return cell_size_;}
@@ -71,7 +69,7 @@ public:
 
     /* Check if the cell / local coordinates lay on the map */
     template<typename T>
-    inline bool isCellInside(T x, T y) {return (x >= 0 && y >= 0 && x < grid_.dims(0) && y < grid_.dims(1));}
+    inline bool isCellInside(T x, T y) {return (x >= 0 && y >= 0 && x < grid.dims(0) && y < grid.dims(1));}
     inline bool isCellInside(Cell c) {return isCellInside(c.x, c.y);}
 
     template<typename T>
@@ -81,9 +79,9 @@ public:
 
     /* Direct cell access */
     // TODO: Check Arrayfire coords order. It's probably wrong...
-    inline int32_t operator[](Cell c) {return grid_(c.x, c.y).scalar<int32_t>();}
-    inline int32_t cell(size_t x, size_t y) {return grid_(x, y).scalar<int32_t>();}
-    inline int32_t cell(Cell c) {return grid_(c.x, c.y).scalar<int32_t>();}
+    inline int32_t operator[](Cell c) {return grid(c.x, c.y).scalar<int32_t>();}
+    inline int32_t cell(size_t x, size_t y) {return grid(x, y).scalar<int32_t>();}
+    inline int32_t cell(Cell c) {return grid(c.x, c.y).scalar<int32_t>();}
 
     /* Cell coordinates from local coordinates */
     template<typename T>
@@ -107,10 +105,10 @@ public:
     template<typename T>
     void addFreeLine(Point<T> end);
 
+    /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
+    af::array grid;
 
 protected:
-    /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
-    af::array grid_;
 
     double width_;      // meters
     double height_;     // meters
