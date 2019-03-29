@@ -4,39 +4,79 @@ namespace hypergrid
 {
 
 /* Constructors */
-GridMap::GridMap()
+GridMap::GridMap() :
+    origin_()
 {
-    // TODO
+    width_ = 0.0;
+    height_ = 0.0;
+    cell_size_ = 1.0;
+    map_frame_id_ = "";
 }
 
-GridMap::GridMap(const nav_msgs::OccupancyGridConstPtr map_msg, std::string global_frame_id)
+GridMap::GridMap(const nav_msgs::OccupancyGridConstPtr map_msg)
 {
     // TODO
 }
 
 GridMap::GridMap(double width, double height, double cell_size,
-                 geometry_msgs::Pose origin, std::string local_frame_id,
-                 std::string global_frame_id)
+                 geometry_msgs::Pose origin, std::string map_frame_id) :
+    origin_(origin)
 {
-    // TODO
+    width_ = width;
+    height_ = height;
+    cell_size_ = cell_size;
+    map_frame_id_ = map_frame_id;
+    // Check for empty origin pose and fix the quaternion
+    if (origin_.orientation.x == 0.0 &&
+        origin_.orientation.y == 0.0 &&
+        origin_.orientation.z == 0.0 &&
+        origin_.orientation.w == 0.0)
+    {
+        origin_.orientation.w = 1.0;
+    }
+    int width_cells = width_ / cell_size_;
+    int height_cells = height_ / cell_size_;
+    grid_ = af::constant(Label::UNKNOWN, width_cells, height_cells, s32);
 }
 
 /* Copy constructor */
 GridMap::GridMap(const GridMap& other_map)
 {
-    // TODO
+    grid_ = other_map.getGrid();
+    origin_ = other_map.getOrigin();
+    width_ = other_map.getWidth();
+    height_ = other_map.getHeight();
+    cell_size_ = other_map.getCellSize();
+    map_frame_id_ = other_map.getMapFrameId();
 }
 
 /* Move constructor */
-GridMap::GridMap(GridMap&& other_map) noexcept
+GridMap::GridMap(GridMap&& other_map) noexcept :
+    grid_(std::move(other_map.getGrid())),
+    map_frame_id_(std::move(other_map.getMapFrameId()))
+
 {
-    // TODO
+    origin_ = other_map.getOrigin();
+    width_ = other_map.getWidth();
+    height_ = other_map.getHeight();
+    cell_size_ = other_map.getCellSize();
+
 }
 
 /* Assignement operator */
-GridMap& GridMap::operator = (const GridMap& other_point)
+GridMap& GridMap::operator = (const GridMap& other_map)
 {
-    // TODO
+    // check for self-assignment
+    if(&other_map == this) return *this;
+
+    grid_ = other_map.getGrid();
+    origin_ = other_map.getOrigin();
+    this->width_ = other_map.getWidth();
+    this->height_ = other_map.getHeight();
+    this->cell_size_ = other_map.getCellSize();
+    this->map_frame_id_ = other_map.getMapFrameId();
+
+    return *this;
 }
 
 
@@ -71,31 +111,9 @@ void GridMap::clear()
 }
 
 
-/* Coordinates convention: x -> col, y -> row.
-   Conversion between global <--> local coordinates.
-   All functions using global coordinates can throw a TF exception.
-*/
-template<typename T>
-Point<T> GridMap::localFromGlobal(T x, T y)
-{
-    // TODO
-}
-
-template<typename T>
-Point<T> GridMap::globalFromLocal(T x, T y)
-{
-    // TODO
-}
-
 /* Cell coordinates from local / global coordinates */
 template<typename T>
 Cell GridMap::cellCoordsFromLocal(T x, T y)
-{
-    // TODO
-}
-
-template<typename T>
-Cell GridMap::cellCoordsFromGlobal(T x, T y)
 {
     // TODO
 }
@@ -107,21 +125,9 @@ Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
     // TODO
 }
 
-template<typename T>
-Point<T> GridMap::globalCoordsFromCell(size_t x, size_t y)
-{
-    // TODO
-}
-
 /* Cell access from local / global coordinates */
 template<typename T>
 uint8_t cellFromLocal(T x, T y)
-{
-    // TODO
-}
-
-template<typename T>
-uint8_t cellFromGlobal(T x, T y)
 {
     // TODO
 }
@@ -144,12 +150,6 @@ Point<T> GridMap::originFromLocal_(Point<T> src) const
 /* Apply the map origin transformation to get the local point from a cell point (in meters) */
 template<typename T>
 Point<T> GridMap::localFromOrigin_(Point<T> src) const
-{
-    // TODO
-}
-
-/* Return the tf::Transform for the [map -> origin] transformation */
-tf::Transform GridMap::getOriginTransform_() const
 {
     // TODO
 }
