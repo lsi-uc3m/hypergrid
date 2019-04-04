@@ -19,6 +19,11 @@ public:
         this->x = 0.0;
         this->y = 0.0;
     }
+    /*Create constractor*/
+    Point(T x, T y){
+        this->x = x;
+        this->y = y;
+    }
     /* Copy constructor */
     Point(const Point& other_point)
     {

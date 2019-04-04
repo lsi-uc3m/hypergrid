@@ -135,29 +135,39 @@ nav_msgs::OccupancyGrid GridMap::toMapMsg()
 }
 
 /* Resize the map to a different resolution (size in meters remains, number of cells changes) */
+/*Works only if cellsize  > output_cell_size*/
+
 void GridMap::resize(double output_cell_size)
 {
-    // TODO
+    grid = af::resize(cell_size_/output_cell_size, grid,  AF_INTERP_LOWER);
+    cell_size_ = output_cell_size;
 }
 
 /* Apply a rotation to the map */
+/*not finished*/
 void GridMap::rotate(double angle)
 {
+   grid = af::rotate(grid, angle,true);
     // TODO
 }
 
 /* Clear the map and set all cells to UNKNOWN */
+/*DONE*/
 void GridMap::clear()
 {
-    // TODO
+    grid = UNKNOWN ;
 }
 
 
-/* Cell coordinates from local / global coordinates */
+/* Cell coordinates from local coordinates */
+/*TODO : Only works with double, needs more modification*/ 
 template<typename T>
 Cell GridMap::cellCoordsFromLocal(T x, T y)
 {
-    // TODO
+    Point<T> t_point = originFromLocal_(Point<T> (x,y));
+    Cell A = Point<size_t> (floor(t_point.x/cell_size_),floor(t_point.y/cell_size_));
+    return A ;
+    
 }
 
 /* Local / global coordinates from cell coords */
@@ -169,7 +179,7 @@ Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 
 /* Cell access from local / global coordinates */
 template<typename T>
-uint8_t cellFromLocal(T x, T y)
+int32_t GridMap::cellFromLocal(T x, T y)
 {
     // TODO
 }
@@ -186,6 +196,11 @@ void GridMap::addFreeLine(Point<T> end)
 template<typename T>
 Point<T> GridMap::originFromLocal_(Point<T> src) const
 {
+    T src_arr[] = {src.x, src.y, 1};
+    af::array af_src(3, 1,src_arr);
+    af::array t_src = af::matmul(af::inverse(getOriginTransform_()),  af_src);
+    af_print(t_src);
+    return Point<T> (t_src(0).scalar<T>(), t_src(1).scalar<T>());
     // TODO
 }
 
@@ -195,6 +210,27 @@ Point<T> GridMap::localFromOrigin_(Point<T> src) const
 {
     // TODO
 }
+/*Getting the Origin Transform matrix*/
 
+af::array GridMap::getOriginTransform_() const
+{
+    // getting Theta
+    double x_diff = origin_.orientation.x - 0 ;
+    double y_diff = origin_.orientation.y - 0 ;
+    double theta = 0 ;
+    if(x_diff!=0) theta = atan(y_diff/x_diff);
+    
+    //creating the translation and rotation matrix 2D
+    double t_r_array[] = {cos(theta), sin(theta), 0, 
+                        -sin(theta), cos(theta), 0,
+                        origin_.position.x, origin_.position.y, 1};
+    af::array t_r_matrix(3,3,t_r_array);
+    return t_r_matrix;
+        
+}
+//template Cell GridMap::cellCoordsFromLocal<int>(int x, int y);
+template Cell GridMap::cellCoordsFromLocal<double>(double x, double y);
+//template Cell GridMap::cellCoordsFromLocal<size_t>(size_t x,size_t y);
 
 } // hypergrid namespace
+

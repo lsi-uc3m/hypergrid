@@ -123,6 +123,8 @@ protected:
     /* Apply the map origin transformation to get the local point from a cell point (in meters) */
     template<typename T>
     Point<T> localFromOrigin_(Point<T> src) const;
+    /*Getting the Origin Transform matrix*/
+    af::array getOriginTransform_() const;
 };
 
 
