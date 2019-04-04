@@ -2,14 +2,17 @@
 #define HYPERGRID_GRIDMAP_HPP
 
 #include <iostream>
+#include <cmath>
 #include <memory>
+
 #include <arrayfire.h>
-#include <hypergrid/point.hpp>
 
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
+#include <tf/transform_datatypes.h>
 
+#include <hypergrid/point.hpp>
 
 namespace hypergrid
 {
@@ -118,12 +121,10 @@ protected:
     geometry_msgs::Pose origin_;
 
     /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
-    template<typename T>
-    Point<T> originFromLocal_(Point<T> src) const;
+    Pointd originFromLocal_(Pointd src) const;
     /* Apply the map origin transformation to get the local point from a cell point (in meters) */
-    template<typename T>
-    Point<T> localFromOrigin_(Point<T> src) const;
-    /*Getting the Origin Transform matrix*/
+    Pointd localFromOrigin_(Pointd src) const;
+    /* Get the homogeneous matrix of the origin transform */
     af::array getOriginTransform_() const;
 };
 

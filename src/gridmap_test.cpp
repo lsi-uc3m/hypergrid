@@ -6,14 +6,11 @@ int main(int argc, char **argv)
 {
     af::info();
 
-    ros::init(argc, argv, "coloc");
+    ros::init(argc, argv, "gridmap_test");
     ros::NodeHandle public_nh, private_nh("~");
 
     ros::Publisher map_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("gridmap_test", 5);
-    //ros::Publisher map_pub_resize = public_nh.advertise<nav_msgs::OccupancyGrid>("gridmap_test_resized", 5);
-
-    af::array test_rand_array = af::randu(10, 10, f32);
-    af_print(test_rand_array);
+    // ros::Publisher map_pub_resize = public_nh.advertise<nav_msgs::OccupancyGrid>("gridmap_test_resized", 5);
 
     double width = 12.0;
     double height = 8.0;
@@ -22,7 +19,7 @@ int main(int argc, char **argv)
     origin.position.x = - (width /2);
     origin.position.y = - (height /2);
 
-    hypergrid::GridMap gridmap(width, height, cell_size ,origin);
+    hypergrid::GridMap gridmap(width, height, cell_size, origin);
 
     // Set some cells
     gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
@@ -37,32 +34,25 @@ int main(int argc, char **argv)
     gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;
     af_print(gridmap.grid);
 
-    //gridmap.rotate(af::Pi/4); 
+    // gridmap.rotate(af::Pi/4);
     
-    //gridmap.clear();
+    // gridmap.clear();
 
-    /*
-    double x =1.0  ;
-    double y =2.0  ;
-    printf("x:                  %lu\n y:             %lu\n",gridmap.cellCoordsFromLocal(x,y).x, gridmap.cellCoordsFromLocal(x,y).y );
-    */
-    
+    std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
 
     nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
 
-    //gridmap.resize(4);
+    // gridmap.resize(4);
 
-   // nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
+    // nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); // if you want to publish the original and resized map
     hypergrid::GridMap converted_grid(map_msg);
     af_print(converted_grid.grid);
-
-    
 
     ros::Rate rate(1);
     while(ros::ok())
     {
         map_pub.publish(map_msg);
-        //map_pub_resize.publish(map_msg2);
+        // map_pub_resize.publish(map_msg2);
         rate.sleep();
     }
 
