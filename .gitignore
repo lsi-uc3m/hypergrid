@@ -20,6 +20,7 @@ msg_gen/
 srv_gen/
 build_isolated/
 devel_isolated/
+.vscode/
 
 *.cfgc
 /cfg/cpp/
