@@ -134,8 +134,9 @@ nav_msgs::OccupancyGrid GridMap::toMapMsg()
     return map_msg;
 }
 
-/* Resize the map to a different resolution (size in meters remains, number of cells changes) */
-/*Works only if cellsize  > output_cell_size*/
+/* Resize the map to a different resolution (size in meters remains, number of cells changes).
+   Works only if cell_size > output_cell_size
+ */
 
 void GridMap::resize(double output_cell_size)
 {
@@ -199,38 +200,32 @@ void GridMap::rotate(double angle)
 }
 
 /* Clear the map and set all cells to UNKNOWN */
-/*DONE*/
 void GridMap::clear()
 {
-    grid = UNKNOWN ;
+    grid = UNKNOWN;
 }
 
-
 /* Cell coordinates from local coordinates */
-/*TODO : Only works with double, needs more modification*/ 
 template<typename T>
 Cell GridMap::cellCoordsFromLocal(T x, T y)
 {
-    Point<T> t_point = originFromLocal_(Point<T> (x,y));
-    Cell A = Point<size_t> (floor(t_point.x/cell_size_),floor(t_point.y/cell_size_));
-    return A ;
-    
+    Pointd t_point = originFromLocal_(Pointd(x, y));
+    return Cell(std::floor(t_point.x / cell_size_), std::floor(t_point.y / cell_size_));
 }
 
-/* Local / global coordinates from cell coords */
+/* Local coordinates from cell coords */
 template<typename T>
 Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 {
     // TODO
 }
 
-/* Cell access from local / global coordinates */
+/* Cell access from local coordinates */
 template<typename T>
 int32_t GridMap::cellFromLocal(T x, T y)
 {
     // TODO
 }
-
 
 /* Add a free line from the vehicle to the given point */
 template<typename T>
@@ -240,45 +235,56 @@ void GridMap::addFreeLine(Point<T> end)
 }
 
 /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
-template<typename T>
-Point<T> GridMap::originFromLocal_(Point<T> src) const
+Pointd GridMap::originFromLocal_(Pointd src) const
 {
-    T src_arr[] = {src.x, src.y, 1};
-    af::array af_src(3, 1,src_arr);
-    af::array t_src = af::matmul(af::inverse(getOriginTransform_()),  af_src);
-    af_print(t_src);
-    return Point<T> (t_src(0).scalar<T>(), t_src(1).scalar<T>());
-    // TODO
+    double src_arr[] = {src.x, src.y, 1};
+    af::array af_src(3, 1, src_arr);
+    af::array t_src = af::matmul(af::inverse(getOriginTransform_()), af_src);
+    return Pointd(t_src(0).scalar<double>(), t_src(1).scalar<double>());
 }
 
 /* Apply the map origin transformation to get the local point from a cell point (in meters) */
-template<typename T>
-Point<T> GridMap::localFromOrigin_(Point<T> src) const
+Pointd GridMap::localFromOrigin_(Pointd src) const
 {
     // TODO
 }
 
-/*Getting the Origin Transform matrix*/
+/* Get the Origin Transform matrix */
 af::array GridMap::getOriginTransform_() const
 {
-    // getting Theta
-    double x_diff = origin_.orientation.x - 0 ;
-    double y_diff = origin_.orientation.y - 0 ;
-    double theta = 0 ;
-    if(x_diff!=0) theta = atan(y_diff/x_diff);
+    // Get Theta
+    double theta = tf::getYaw(origin_.orientation);
     
-    //creating the translation and rotation matrix 2D
-    double t_r_array[] = {cos(theta), sin(theta), 0, 
-                        -sin(theta), cos(theta), 0,
-                        origin_.position.x, origin_.position.y, 1};
-    af::array t_r_matrix(3,3,t_r_array);
+    // Create the 2D translation and rotation matrix
+    double t_r_array[] = {std::cos(theta),    std::sin(theta),    0,
+                          -std::sin(theta),   std::cos(theta),    0,
+                          origin_.position.x, origin_.position.y, 1};
+    af::array t_r_matrix(3, 3, t_r_array);
     return t_r_matrix;
-        
 }
 
-//template Cell GridMap::cellCoordsFromLocal<int>(int x, int y);
-template Cell GridMap::cellCoordsFromLocal<double>(double x, double y);
-//template Cell GridMap::cellCoordsFromLocal<size_t>(size_t x,size_t y);
+
+/* Macro to instantiate all template functions for a given type */
+#define INSTANTIATE_TEMPLATES(TYPE)                                         \
+    template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
+    template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
+    template int32_t GridMap::cellFromLocal(TYPE x, TYPE y);                \
+    template void GridMap::addFreeLine(Point<TYPE> end);
+
+INSTANTIATE_TEMPLATES(char)
+INSTANTIATE_TEMPLATES(unsigned char)
+INSTANTIATE_TEMPLATES(short)
+INSTANTIATE_TEMPLATES(unsigned short)
+INSTANTIATE_TEMPLATES(int)
+INSTANTIATE_TEMPLATES(unsigned int)
+INSTANTIATE_TEMPLATES(long)
+INSTANTIATE_TEMPLATES(unsigned long)
+INSTANTIATE_TEMPLATES(long long)
+INSTANTIATE_TEMPLATES(unsigned long long)
+INSTANTIATE_TEMPLATES(float)
+INSTANTIATE_TEMPLATES(double)
+INSTANTIATE_TEMPLATES(long double)
+
 
 } // hypergrid namespace
 

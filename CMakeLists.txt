@@ -139,7 +139,7 @@ add_dependencies(gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_T
 target_link_libraries(gridmap
   ${catkin_LIBRARIES}
   ${ArrayFire_CUDA_LIBRARIES}
- # ${ArrayFire_CPU_LIBRARIES}
+  # ${ArrayFire_CPU_LIBRARIES}
 )
 
 ## Declare a C++ executable

@@ -6,7 +6,7 @@ int main(int argc, char **argv)
 {
     af::info();
 
-    ros::init(argc, argv, "coloc");
+    ros::init(argc, argv, "gridmap_test");
     ros::NodeHandle public_nh, private_nh("~");
 
     ros::Publisher map_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("gridmap_test", 5);
@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     origin.position.x = - (width /2);
     origin.position.y = - (height /2);
 
-    hypergrid::GridMap gridmap(width, height, cell_size ,origin);
+    hypergrid::GridMap gridmap(width, height, cell_size, origin);
 
     // Set some cells
     gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     
     
     
-    //gridmap.clear();
+    // gridmap.clear();
 
     /*
     double x =1.0  ;
@@ -66,20 +66,22 @@ int main(int argc, char **argv)
     */
     nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
 
-    gridmap.rotate(af::Pi/4); 
-    //gridmap.resize(4);
+   // gridmap.rotate(af::Pi/4); 
+    //gridmap.resize(1);
 
-    nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
+   // nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
+   // std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
+
+
+   
     hypergrid::GridMap converted_grid(map_msg);
     af_print(converted_grid.grid);
-
-    
 
     ros::Rate rate(1);
     while(ros::ok())
     {
         map_pub.publish(map_msg);
-        map_pub_resize.publish(map_msg2);
+       // map_pub_resize.publish(map_msg2);
         rate.sleep();
     }
 
