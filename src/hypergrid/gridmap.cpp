@@ -147,7 +147,54 @@ void GridMap::resize(double output_cell_size)
 /*not finished*/
 void GridMap::rotate(double angle)
 {
-   grid = af::rotate(grid, angle,true);
+    /*Original  Dimension*/
+    long dim0 = grid.dims(0) ;
+    long dim1 = grid.dims(1) ;
+    /*adding grid.dim(0) rows to each side then adding grid.dim(1) columns to each side to modfiy rotate function*/
+    af::array bigger0 = af::constant((int)Label::UNKNOWN, grid.dims(0), grid.dims(1), s32);
+    af::array bigger1 = af::constant((int)Label::UNKNOWN, grid.dims(0)*3, grid.dims(1), s32);
+    //rows
+    grid = af::join(0,grid,bigger0);
+    grid = af::join(0,bigger0,grid);
+    //columns
+    grid = af::join(1,grid,bigger1);
+    grid = af::join(1,bigger1,grid);
+    af_print(grid);
+    af_print(grid(6,5));
+    af::array temp(grid.dims(0), dim1, s32);
+
+  /*  af::array B(3,3);
+    gfor(af::seq ii ,0,2) {
+         af::array A = af::randu(3,1);
+            B(af::span,ii) = A;
+            }
+    af_print(B);*/
+
+    //af_print(af::seq (dim0, grid.dims(0)-dim0 ));
+    for(int i = 4; i <= 7; i++)
+    {
+        af_print(grid(af::span, i));
+        temp(af::span,i-dim1) = grid(af::span, i) * 1;
+
+    }
+
+    af::array temp2(dim0, dim1, s32);
+
+    for(int i = 6; i <= 11; i++)
+    {
+        af_print(grid(af::span, i));
+        temp2(i-6,af::span) = temp(i,af::span) * 1;
+
+    }
+    
+    af_print(temp2) ;
+    
+    
+    //af_print(temp);
+    //rotate
+    //grid = af::rotate(grid, angle,true);
+   // af::array temp
+   // grid = grid()
     // TODO
 }
 
@@ -210,8 +257,8 @@ Point<T> GridMap::localFromOrigin_(Point<T> src) const
 {
     // TODO
 }
-/*Getting the Origin Transform matrix*/
 
+/*Getting the Origin Transform matrix*/
 af::array GridMap::getOriginTransform_() const
 {
     // getting Theta
@@ -228,6 +275,7 @@ af::array GridMap::getOriginTransform_() const
     return t_r_matrix;
         
 }
+
 //template Cell GridMap::cellCoordsFromLocal<int>(int x, int y);
 template Cell GridMap::cellCoordsFromLocal<double>(double x, double y);
 //template Cell GridMap::cellCoordsFromLocal<size_t>(size_t x,size_t y);
