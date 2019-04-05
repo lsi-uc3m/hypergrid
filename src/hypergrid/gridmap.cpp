@@ -145,7 +145,7 @@ void GridMap::resize(double output_cell_size)
 }
 
 /* Apply a rotation to the map */
-/*not finished*/
+/*DONE*/
 void GridMap::rotate(double angle)
 {
     /*Original  Dimension*/
@@ -160,43 +160,10 @@ void GridMap::rotate(double angle)
     //columns
     grid = af::join(1,grid,bigger1);
     grid = af::join(1,bigger1,grid);
-    af_print(grid);
-    af_print(grid(6,5));
-    af::array temp(grid.dims(0), dim1, s32);
-
-  /*  af::array B(3,3);
-    gfor(af::seq ii ,0,2) {
-         af::array A = af::randu(3,1);
-            B(af::span,ii) = A;
-            }
-    af_print(B);*/
-
-    //af_print(af::seq (dim0, grid.dims(0)-dim0 ));
-    for(int i = 4; i <= 7; i++)
-    {
-        af_print(grid(af::span, i));
-        temp(af::span,i-dim1) = grid(af::span, i) * 1;
-
-    }
-
-    af::array temp2(dim0, dim1, s32);
-
-    for(int i = 6; i <= 11; i++)
-    {
-        af_print(grid(af::span, i));
-        temp2(i-6,af::span) = temp(i,af::span) * 1;
-
-    }
-    
-    af_print(temp2) ;
-    
-    
-    //af_print(temp);
     //rotate
-    //grid = af::rotate(grid, angle,true);
-   // af::array temp
-   // grid = grid()
-    // TODO
+    grid = af::rotate(grid, angle,true);
+    //Then return to original size 
+    grid = grid(af::seq(dim0, grid.dims(0)-dim0-1), af::seq(dim1, grid.dims(1)-dim1-1));
 }
 
 /* Clear the map and set all cells to UNKNOWN */

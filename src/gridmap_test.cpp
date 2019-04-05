@@ -66,10 +66,10 @@ int main(int argc, char **argv)
     */
     nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
 
-   // gridmap.rotate(af::Pi/4); 
+    gridmap.rotate(af::Pi/4); 
     //gridmap.resize(1);
 
-   // nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
+    nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
    // std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
 
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv)
     while(ros::ok())
     {
         map_pub.publish(map_msg);
-       // map_pub_resize.publish(map_msg2);
+        map_pub_resize.publish(map_msg2);
         rate.sleep();
     }
 
