@@ -135,9 +135,7 @@ nav_msgs::OccupancyGrid GridMap::toMapMsg()
 }
 
 /* Resize the map to a different resolution (size in meters remains, number of cells changes).
-   Works only if cell_size > output_cell_size
- */
-
+   Works only if cell_size > output_cell_size*/
 void GridMap::resize(double output_cell_size)
 {
     grid = af::resize(cell_size_/output_cell_size, grid,  AF_INTERP_LOWER);
@@ -167,12 +165,14 @@ void GridMap::rotate(double angle)
 }
 
 /* Clear the map and set all cells to UNKNOWN */
+/*DONE*/
 void GridMap::clear()
 {
     grid = UNKNOWN;
 }
 
 /* Cell coordinates from local coordinates */
+/*DONE*/
 template<typename T>
 Cell GridMap::cellCoordsFromLocal(T x, T y)
 {
@@ -181,10 +181,13 @@ Cell GridMap::cellCoordsFromLocal(T x, T y)
 }
 
 /* Local coordinates from cell coords */
+/*DONE*/
 template<typename T>
 Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 {
-    // TODO
+    // Get the local point in the center of the cell
+    Pointd t_point = localFromOrigin_(Pointd(x * cell_size_ + cell_size_/2, y * cell_size_ + cell_size_/2));
+    return Point<T>(t_point.x, t_point.y);
 }
 
 /* Cell access from local coordinates */
@@ -213,7 +216,10 @@ Pointd GridMap::originFromLocal_(Pointd src) const
 /* Apply the map origin transformation to get the local point from a cell point (in meters) */
 Pointd GridMap::localFromOrigin_(Pointd src) const
 {
-    // TODO
+    double src_arr[] = {src.x, src.y, 1};
+    af::array af_src(3, 1, src_arr);
+    af::array t_src = af::matmul(getOriginTransform_(), af_src);
+    return Pointd(t_src(0).scalar<double>(), t_src(1).scalar<double>());
 }
 
 /* Get the Origin Transform matrix */
@@ -234,7 +240,7 @@ af::array GridMap::getOriginTransform_() const
 /* Macro to instantiate all template functions for a given type */
 #define INSTANTIATE_TEMPLATES(TYPE)                                         \
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
-    template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
+    template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);     \
     template int32_t GridMap::cellFromLocal(TYPE x, TYPE y);                \
     template void GridMap::addFreeLine(Point<TYPE> end);
 

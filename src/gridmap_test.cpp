@@ -64,13 +64,19 @@ int main(int argc, char **argv)
     double y =2.0  ;
     printf("x:                  %lu\n y:             %lu\n",gridmap.cellCoordsFromLocal(x,y).x, gridmap.cellCoordsFromLocal(x,y).y );
     */
+    size_t a = 3 ;
+    size_t b = 2 ;
     nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
-
-    gridmap.rotate(af::Pi/4); 
+    hypergrid::Point<double> p = gridmap.localCoordsFromCell<double>(a, b);
+    std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(2.0, 2.0).str() << std::endl;
+    std::cout << "Cell coords [3, 2] -> Local " << gridmap.localCoordsFromCell<double>(a, b).str() << std::endl;
+   // gridmap.rotate(af::Pi/4); 
     //gridmap.resize(1);
-
+   
+    //hypergrid::Cell z(3,2);
+  //  gridmap.localCoordsFromCell(a,b);
     nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
-   // std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
+    
 
 
    
