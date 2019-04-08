@@ -194,7 +194,9 @@ Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 template<typename T>
 int32_t GridMap::cellFromLocal(T x, T y)
 {
-    // TODO
+    Cell p = cellCoordsFromLocal(x,y);
+    if(!isCellInside(p)) throw std::out_of_range("Index out of map bounds");
+    return cell(p);
 }
 
 /* Add a free line from the vehicle to the given point */
