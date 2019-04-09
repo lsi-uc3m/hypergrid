@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 
     double width = 12.0;
     double height = 8.0;
-    double cell_size = 2.0;
+    double cell_size = 1.0;
     geometry_msgs::Pose origin;
     origin.position.x = - (width /2);
     origin.position.y = - (height /2);
@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     hypergrid::GridMap gridmap(width, height, cell_size, origin);
 
     // Set some cells
-    gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
+   /* gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
     gridmap.grid(4, 1) = hypergrid::GridMap::FREE;
     gridmap.grid(0, 1) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 1) = hypergrid::GridMap::OBSTACLE;
@@ -34,8 +34,11 @@ int main(int argc, char **argv)
     gridmap.grid(0, 3) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(0, 2) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 3) = hypergrid::GridMap::OBSTACLE;
-    gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;
-
+    gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;*/
+    hypergrid::Cell c = gridmap.cellCoordsFromLocal(1, -1);
+    gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
+    gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
+    gridmap.addFreeLine(hypergrid::Point<double>(5,-3));
     af_print(gridmap.grid);
 
     int example1[] = {1,2,3,4,5,6,7,8,9};

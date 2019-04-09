@@ -126,6 +126,8 @@ protected:
     Pointd localFromOrigin_(Pointd src) const;
     /* Get the homogeneous matrix of the origin transform */
     af::array getOriginTransform_() const;
+
+    void bresenham(int x1, int y1, int const x2, int const y2);
 };
 
 
