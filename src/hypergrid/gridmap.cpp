@@ -210,6 +210,15 @@ void GridMap::addFreeLine(Point<T> end)
     bresenham(start_c.x,start_c.y,end_c.x,end_c.y);
 }
 
+/* Add a free line from the start point to  the end point */
+template<typename T>
+void GridMap::addFreeLine(Point<T> start, Point<T> end)
+{
+    Cell start_c = cellCoordsFromLocal(start);
+    Cell end_c = cellCoordsFromLocal(end);
+    bresenham(start_c.x,start_c.y,end_c.x,end_c.y);
+}
+
 /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
 /*DONE*/
 Pointd GridMap::originFromLocal_(Pointd src) const

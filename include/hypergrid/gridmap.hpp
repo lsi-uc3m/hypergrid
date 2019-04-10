@@ -107,6 +107,9 @@ public:
     /* Add a free line from the vehicle to the given point */
     template<typename T>
     void addFreeLine(Point<T> end);
+    /* Add a free line from the start point to  the end point */
+    template<typename T>
+    void addFreeLine(Point<T> start, Point<T> end);
 
     /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
     af::array grid;
