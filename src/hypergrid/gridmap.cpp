@@ -322,7 +322,9 @@ void GridMap::bresenham(int x1, int y1, int const x2, int const y2)
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
     template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);     \
     template int32_t GridMap::cellFromLocal(TYPE x, TYPE y);                \
-    template void GridMap::addFreeLine(Point<TYPE> end);
+    template void GridMap::addFreeLine(Point<TYPE> end);                    \
+    template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
+
 
 INSTANTIATE_TEMPLATES(char)
 INSTANTIATE_TEMPLATES(unsigned char)
