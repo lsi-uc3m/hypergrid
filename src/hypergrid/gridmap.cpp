@@ -190,7 +190,7 @@ Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 
 /* Cell access from local coordinates */
 template<typename T>
-int32_t GridMap::cellFromLocal(T x, T y)
+af::array::array_proxy GridMap::cellFromLocal(T x, T y)
 {
     Cell p = cellCoordsFromLocal(x, y);
     if (!isCellInside(p)) throw std::out_of_range("Index out of map bounds");
@@ -316,7 +316,7 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
 #define INSTANTIATE_TEMPLATES(TYPE)                                         \
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
     template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
-    template int32_t GridMap::cellFromLocal(TYPE x, TYPE y);                \
+    template af::array::array_proxy GridMap::cellFromLocal(TYPE x, TYPE y); \
     template void GridMap::addFreeLine(Point<TYPE> end);                    \
     template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
 

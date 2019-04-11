@@ -25,7 +25,8 @@ int main(int argc, char **argv)
     hypergrid::GridMap gridmap(width, height, cell_size, origin);
 
     // Set some cells
-    /* gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
+    /*
+    gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
     gridmap.grid(4, 1) = hypergrid::GridMap::FREE;
     gridmap.grid(0, 1) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 1) = hypergrid::GridMap::OBSTACLE;
@@ -34,7 +35,8 @@ int main(int argc, char **argv)
     gridmap.grid(0, 3) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(0, 2) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 3) = hypergrid::GridMap::OBSTACLE;
-    gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;*/
+    gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;
+    */
     hypergrid::Cell c = gridmap.cellCoordsFromLocal(1, -1);
     gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
@@ -49,33 +51,39 @@ int main(int argc, char **argv)
     af::array join2(3,3,example2);
     af::array join3(3,3,example3);
 
-    //af_print(af::join(0,join1,join2));
-    //af_print(af::join(1,join1,join2));
-    //af_print(af::join(2,join1,join2));
-
-    /*gfor(af::seq i ,2,2 ,join1.dims(0))
-    {
-        af_print(join1(i));
-    }*/
-
-    //gridmap.clear();
+    // af_print(af::join(0,join1,join2));
+    // af_print(af::join(1,join1,join2));
+    // af_print(af::join(2,join1,join2));
 
     /*
-    double x =1.0  ;
-    double y =2.0  ;
-    printf("x:                  %lu\n y:             %lu\n",gridmap.cellCoordsFromLocal(x,y).x, gridmap.cellCoordsFromLocal(x,y).y );
+    gfor(af::seq i ,2,2 ,join1.dims(0))
+    {
+        af_print(join1(i));
+    }
     */
 
-    nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
-   
-    std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(6.0,4.0).str() << std::endl;
+    // gridmap.clear();
 
-    size_t a = 4 ;
-    size_t b = 3 ;
+    std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
+    std::cout << "Local [1, 1] cell: " << gridmap.cellFromLocal(1.0, 1.0).scalar<int32_t>() << std::endl;
+
+    size_t a = 4;
+    size_t b = 3;
+    c = hypergrid::Cell(a, b);
     hypergrid::Point<double> p = gridmap.localCoordsFromCell<double>(a, b);
-    std::cout << "Cell coords [3, 2] -> Local " << gridmap.localCoordsFromCell<double>(a, b).str() << std::endl;
+    std::cout << "Cell coords [4, 3] -> Local " << gridmap.localCoordsFromCell<double>(a, b).str() << std::endl;
 
-    printf("%d cell \n",gridmap.cellFromLocal(-5,-3));
+    // Test direct cell access
+    std::cout << "Cell [4, 3]: " << gridmap[c].scalar<int32_t>() << std::endl;
+    std::cout << "Cell [4, 3]: " << gridmap.cell(c).scalar<int32_t>() << std::endl;
+    std::cout << "Cell [4, 3]: " << gridmap.cell(a, b).scalar<int32_t>() << std::endl;
+    std::cout << "Cell from local [1.5, 1.5]: " << gridmap.cellFromLocal(1.5, 1.5).scalar<int32_t>() << std::endl;
+
+    // Direct cell modification
+    gridmap[c] = hypergrid::GridMap::FREE;
+    gridmap.cellFromLocal(1.5, 1.5) = hypergrid::GridMap::FREE;
+    std::cout << "Cell [4, 3]: " << gridmap[c].scalar<int32_t>() << std::endl;
+    std::cout << "Cell from local [1.5, 1.5]: " << gridmap.cellFromLocal(1.5, 1.5).scalar<int32_t>() << std::endl;
 
     // gridmap.rotate(af::Pi/4); 
     // gridmap.resize(1);
@@ -83,6 +91,7 @@ int main(int argc, char **argv)
     // hypergrid::Cell z(3,2);
     // gridmap.localCoordsFromCell(a,b);
 
+    nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
     nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); // if you want to publish the original and resized map
    
     hypergrid::GridMap converted_grid(map_msg);

@@ -81,10 +81,9 @@ public:
     inline bool isLocalInside(Point<T> p) {return isLocalInside<T>(p.x, p.y);}
 
     /* Direct cell access */
-    // TODO: Check Arrayfire coords order. It's probably wrong...
-    inline int32_t operator[](Cell c) {return grid(c.x, c.y).scalar<int32_t>();}
-    inline int32_t cell(size_t x, size_t y) {return grid(x, y).scalar<int32_t>();}
-    inline int32_t cell(Cell c) {return grid(c.x, c.y).scalar<int32_t>();}
+    inline af::array::array_proxy operator[](Cell c) {return grid(c.x, c.y);}
+    inline af::array::array_proxy cell(size_t x, size_t y) {return grid(x, y);}
+    inline af::array::array_proxy cell(Cell c) {return grid(c.x, c.y);}
 
     /* Cell coordinates from local coordinates */
     template<typename T>
@@ -100,9 +99,9 @@ public:
 
     /* Cell access from local coordinates */
     template<typename T>
-    int32_t cellFromLocal(T x, T y);
+    af::array::array_proxy cellFromLocal(T x, T y);
     template<typename T>
-    inline int32_t cellFromLocal(Point<T> p) {return cellFromLocal(p.x, p.y);}
+    inline af::array::array_proxy cellFromLocal(Point<T> p) {return cellFromLocal(p.x, p.y);}
 
     /* Add a free line from the vehicle to the given point */
     template<typename T>
