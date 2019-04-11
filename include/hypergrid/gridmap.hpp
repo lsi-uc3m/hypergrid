@@ -108,12 +108,12 @@ public:
     template<typename T>
     void addFreeLine(Point<T> end);
     template<typename T>
-    inline void addFreeLine(T x,T y){return addFreeLine(Point<T>(x,y));}
-    /* Add a free line from the start point to  the end point */
+    inline void addFreeLine(T x,T y) {return addFreeLine(Point<T>(x,y));}
+    /* Add a free line from the start point to the end point */
     template<typename T>
     void addFreeLine(Point<T> start, Point<T> end);
     template<typename T>
-    inline void addFreeLine(T x1,T y1,T x2,T y2){return addFreeLine(Point<T>(x1,y1), Point<T>(x2,y2));}
+    inline void addFreeLine(T x1, T y1, T x2, T y2) {return addFreeLine(Point<T>(x1, y1), Point<T>(x2, y2));}
 
     /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
     af::array grid;
@@ -134,7 +134,7 @@ protected:
     /* Get the homogeneous matrix of the origin transform */
     af::array getOriginTransform_() const;
 
-    void bresenham(int x1, int y1, int const x2, int const y2);
+    void bresenham_(int x1, int y1, int const x2, int const y2);
 };
 
 

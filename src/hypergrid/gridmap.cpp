@@ -135,44 +135,43 @@ nav_msgs::OccupancyGrid GridMap::toMapMsg()
 }
 
 /* Resize the map to a different resolution (size in meters remains, number of cells changes).
-   Works only if cell_size > output_cell_size*/
+   Works only if cell_size > output_cell_size
+*/
 void GridMap::resize(double output_cell_size)
 {
-    grid = af::resize(cell_size_/output_cell_size, grid,  AF_INTERP_LOWER);
+    grid = af::resize(cell_size_ / output_cell_size, grid, AF_INTERP_LOWER);
     cell_size_ = output_cell_size;
 }
 
 /* Apply a rotation to the map */
-/*DONE*/
 void GridMap::rotate(double angle)
 {
-    /*Original  Dimension*/
-    long dim0 = grid.dims(0) ;
-    long dim1 = grid.dims(1) ;
-    /*adding grid.dim(0) rows to each side then adding grid.dim(1) columns to each side to modfiy rotate function*/
+    // Original  Dimension
+    long dim0 = grid.dims(0);
+    long dim1 = grid.dims(1);
+    // Adding grid.dim(0) rows to each side then adding grid.dim(1) columns to each side to modfiy rotate function
     af::array bigger0 = af::constant((int)Label::UNKNOWN, grid.dims(0), grid.dims(1), s32);
-    af::array bigger1 = af::constant((int)Label::UNKNOWN, grid.dims(0)*3, grid.dims(1), s32);
-    //rows
-    grid = af::join(0,grid,bigger0);
-    grid = af::join(0,bigger0,grid);
-    //columns
-    grid = af::join(1,grid,bigger1);
-    grid = af::join(1,bigger1,grid);
-    //rotate
-    grid = af::rotate(grid, angle,true);
-    //Then return to original size 
-    grid = grid(af::seq(dim0, grid.dims(0)-dim0-1), af::seq(dim1, grid.dims(1)-dim1-1));
+    af::array bigger1 = af::constant((int)Label::UNKNOWN, grid.dims(0) * 3, grid.dims(1), s32);
+
+    // Rows
+    grid = af::join(0, grid, bigger0);
+    grid = af::join(0, bigger0, grid);
+    // Columns
+    grid = af::join(1, grid, bigger1);
+    grid = af::join(1, bigger1, grid);
+    // Rotate
+    grid = af::rotate(grid, angle, true);
+    // Return to original size
+    grid = grid(af::seq(dim0, grid.dims(0) - dim0 - 1), af::seq(dim1, grid.dims(1) - dim1 - 1));
 }
 
 /* Clear the map and set all cells to UNKNOWN */
-/*DONE*/
 void GridMap::clear()
 {
     grid = UNKNOWN;
 }
 
 /* Cell coordinates from local coordinates */
-/*DONE*/
 template<typename T>
 Cell GridMap::cellCoordsFromLocal(T x, T y)
 {
@@ -181,7 +180,6 @@ Cell GridMap::cellCoordsFromLocal(T x, T y)
 }
 
 /* Local coordinates from cell coords */
-/*DONE*/
 template<typename T>
 Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 {
@@ -191,23 +189,21 @@ Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)
 }
 
 /* Cell access from local coordinates */
-/*DONE*/
 template<typename T>
 int32_t GridMap::cellFromLocal(T x, T y)
 {
-    Cell p = cellCoordsFromLocal(x,y);
-    if(!isCellInside(p)) throw std::out_of_range("Index out of map bounds");
+    Cell p = cellCoordsFromLocal(x, y);
+    if (!isCellInside(p)) throw std::out_of_range("Index out of map bounds");
     return cell(p);
 }
 
 /* Add a free line from the vehicle to the given point */
-/*DONE*/
 template<typename T>
 void GridMap::addFreeLine(Point<T> end)
 {
-    Cell start_c = cellCoordsFromLocal(0,0);
+    Cell start_c = cellCoordsFromLocal(0, 0);
     Cell end_c = cellCoordsFromLocal(end);
-    bresenham(start_c.x,start_c.y,end_c.x,end_c.y);
+    bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
 }
 
 /* Add a free line from the start point to  the end point */
@@ -216,11 +212,10 @@ void GridMap::addFreeLine(Point<T> start, Point<T> end)
 {
     Cell start_c = cellCoordsFromLocal(start);
     Cell end_c = cellCoordsFromLocal(end);
-    bresenham(start_c.x,start_c.y,end_c.x,end_c.y);
+    bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
 }
 
 /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
-/*DONE*/
 Pointd GridMap::originFromLocal_(Pointd src) const
 {
     double src_arr[] = {src.x, src.y, 1};
@@ -230,7 +225,6 @@ Pointd GridMap::originFromLocal_(Pointd src) const
 }
 
 /* Apply the map origin transformation to get the local point from a cell point (in meters) */
-/*DONE*/
 Pointd GridMap::localFromOrigin_(Pointd src) const
 {
     double src_arr[] = {src.x, src.y, 1};
@@ -240,7 +234,6 @@ Pointd GridMap::localFromOrigin_(Pointd src) const
 }
 
 /* Get the Origin Transform matrix */
-/*DONE*/
 af::array GridMap::getOriginTransform_() const
 {
     // Get Theta
@@ -254,73 +247,75 @@ af::array GridMap::getOriginTransform_() const
     return t_r_matrix;
 }
 
-/*Bresenham algorithm to draw line from point to point in OCcupancyGrid*/
-/*Copied from this link :http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm*/
-void GridMap::bresenham(int x1, int y1, int const x2, int const y2)
+/* Bresenham algorithm to draw line from one point to another in the occupancy grid.
+   Copied from: http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
+*/
+void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
 {
     int delta_x(x2 - x1);
-    // if x1 == x2, then it does not matter what we set here
+    // If x1 == x2, then it does not matter what we set here
     signed char const ix((delta_x > 0) - (delta_x < 0));
     delta_x = std::abs(delta_x) << 1;
  
     int delta_y(y2 - y1);
-    // if y1 == y2, then it does not matter what we set here
+    // If y1 == y2, then it does not matter what we set here
     signed char const iy((delta_y > 0) - (delta_y < 0));
     delta_y = std::abs(delta_y) << 1;
  
-    if (grid(x1,y1).scalar<int>()==OBSTACLE) return;
-    grid(x1,y1) = FREE;
+    if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
+    grid(x1, y1) = FREE;
  
     if (delta_x >= delta_y)
     {
-        // error may go below zero
+        // Error may go below zero
         int error(delta_y - (delta_x >> 1));
  
         while (x1 != x2)
         {
-            // reduce error, while taking into account the corner case of error == 0
+            // Reduce error, while taking into account the corner case of error == 0
             if ((error > 0) || (!error && (ix > 0)))
             {
                 error -= delta_x;
                 y1 += iy;
             }
-            // else do nothing
+            // Else do nothing
  
             error += delta_y;
             x1 += ix;
  
-            if (grid(x1,y1).scalar<int>()==OBSTACLE) return;
-            grid(x1,y1) = FREE;
+            if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
+            grid(x1, y1) = FREE;
         }
     }
     else
     {
-        // error may go below zero
+        // Error may go below zero
         int error(delta_x - (delta_y >> 1));
  
         while (y1 != y2)
         {
-            // reduce error, while taking into account the corner case of error == 0
+            // Reduce error, while taking into account the corner case of error == 0
             if ((error > 0) || (!error && (iy > 0)))
             {
                 error -= delta_y;
                 x1 += ix;
             }
-            // else do nothing
+            // Else do nothing
  
             error += delta_x;
             y1 += iy;
  
-            if (grid(x1,y1).scalar<int>()==OBSTACLE) return;
-            grid(x1,y1) = FREE;
+            if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
+            grid(x1, y1) = FREE;
         }
     }
 }
 
+
 /* Macro to instantiate all template functions for a given type */
 #define INSTANTIATE_TEMPLATES(TYPE)                                         \
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
-    template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);     \
+    template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
     template int32_t GridMap::cellFromLocal(TYPE x, TYPE y);                \
     template void GridMap::addFreeLine(Point<TYPE> end);                    \
     template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
@@ -342,4 +337,3 @@ INSTANTIATE_TEMPLATES(long double)
 
 
 } // hypergrid namespace
-

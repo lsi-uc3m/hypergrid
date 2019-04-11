@@ -25,7 +25,7 @@ int main(int argc, char **argv)
     hypergrid::GridMap gridmap(width, height, cell_size, origin);
 
     // Set some cells
-   /* gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
+    /* gridmap.grid(0, 0) = hypergrid::GridMap::FREE;
     gridmap.grid(4, 1) = hypergrid::GridMap::FREE;
     gridmap.grid(0, 1) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 1) = hypergrid::GridMap::OBSTACLE;
@@ -53,15 +53,11 @@ int main(int argc, char **argv)
     //af_print(af::join(1,join1,join2));
     //af_print(af::join(2,join1,join2));
 
-    /*gfor(af::seq i ,2,2 ,join1.dims(0)){
-
-    
+    /*gfor(af::seq i ,2,2 ,join1.dims(0))
+    {
         af_print(join1(i));
     }*/
-    
-    
-    
-    
+
     //gridmap.clear();
 
     /*
@@ -81,16 +77,13 @@ int main(int argc, char **argv)
 
     printf("%d cell \n",gridmap.cellFromLocal(-5,-3));
 
-    //gridmap.rotate(af::Pi/4); 
-    //gridmap.resize(1);
+    // gridmap.rotate(af::Pi/4); 
+    // gridmap.resize(1);
    
-    //hypergrid::Cell z(3,2);
-    //gridmap.localCoordsFromCell(a,b);
+    // hypergrid::Cell z(3,2);
+    // gridmap.localCoordsFromCell(a,b);
 
-    nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); //if you want to publish the original and resized map
-    
-
-
+    nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); // if you want to publish the original and resized map
    
     hypergrid::GridMap converted_grid(map_msg);
     af_print(converted_grid.grid);
