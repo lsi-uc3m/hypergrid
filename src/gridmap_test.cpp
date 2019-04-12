@@ -36,6 +36,10 @@ int main(int argc, char **argv)
     gridmap.grid(1, 3) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(1, 2) = hypergrid::GridMap::OBSTACLE;*/
     hypergrid::Cell c = gridmap.cellCoordsFromLocal(1, -1);
+
+
+    //obstacles = af::join(0,obesracle_af,obstacles);
+
     gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
     gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
     gridmap.addFreeLine(hypergrid::Point<double>(5,-3));
