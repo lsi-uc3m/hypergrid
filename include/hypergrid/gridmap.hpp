@@ -105,14 +105,14 @@ public:
 
     /* Add a free line from the vehicle to the given point */
     template<typename T>
-    void addFreeLine(Point<T> end);
+    af::array addFreeLine(Point<T> end);
     template<typename T>
-    inline void addFreeLine(T x,T y) {return addFreeLine(Point<T>(x,y));}
+    inline af::array addFreeLine(T x,T y) {return addFreeLine(Point<T>(x,y));}
     /* Add a free line from the start point to the end point */
     template<typename T>
-    void addFreeLine(Point<T> start, Point<T> end);
+    af::array addFreeLine(Point<T> start, Point<T> end);
     template<typename T>
-    inline void addFreeLine(T x1, T y1, T x2, T y2) {return addFreeLine(Point<T>(x1, y1), Point<T>(x2, y2));}
+    inline af::array addFreeLine(T x1, T y1, T x2, T y2) {return addFreeLine(Point<T>(x1, y1), Point<T>(x2, y2));}
 
     /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
     af::array grid;
@@ -134,6 +134,8 @@ protected:
     af::array getOriginTransform_() const;
 
     void bresenham_(int x1, int y1, int const x2, int const y2);
+
+    void dda_(float x1, float y1, float const x2, float const y2);
 };
 
 

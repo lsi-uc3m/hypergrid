@@ -76,14 +76,23 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     // Cannot use gfor because of isCellInside check
     // TODO: Find a way to parallelize this
     // gfor(af::seq i, scan->ranges.size())
-    for (int i = 0; i < scan->ranges.size(); ++i)
+    /*for (int i = 0; i < scan->ranges.size(); ++i)
     {
         hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
                                                                  obstacles(i, 1).scalar<double>());
+      
         if (gridmap.isCellInside(obs_coords))
         {
             gridmap[obs_coords] = hypergrid::GridMap::OBSTACLE;
         }
+    }*/
+
+    gfor(af::seq i, obstacles.dims(0) )
+    {
+        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
+                                                                 obstacles(i, 1).scalar<double>());
+        af::array isInside = (gridmap.isCellInside(obs_coords));
+        gridmap[obs_coords] = (isInside).as(f32) * hypergrid::GridMap::OBSTACLE;
     }
 
     if (DEBUG) std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
@@ -93,13 +102,21 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     // Cannot use gfor because of branching inside addFreeLine method and isCellInside check
     // TODO: Find a way to parallelize this
     // gfor(af::seq i, scan->ranges.size())
-    for (int i = 0; i < scan->ranges.size(); ++i)
+   /* for (int i = 0; i < scan->ranges.size(); ++i)
     {
         hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
                                                                  obstacles(i, 1).scalar<double>());
         // TODO: Draw the free line from the sensor point, and not from the vehicle center
         // Check if the obstacle coords lay inside the map before modifying the cell
         if (gridmap.isCellInside(obs_coords)) gridmap.addFreeLine(obstacles(i, 0).scalar<double>(),
+                                                                  obstacles(i, 1).scalar<double>());
+    }*/
+    gfor(af::seq i, obstacles.dims(0) )
+    {
+        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
+                                                                 obstacles(i, 1).scalar<double>());
+        af::array isInside = (gridmap.isCellInside(obs_coords));
+        af::array balabizo =  (isInside).as(f32) * gridmap.addFreeLine(trans.getX(), trans.getY(),obstacles(i, 0).scalar<double>(),
                                                                   obstacles(i, 1).scalar<double>());
     }
 
@@ -119,14 +136,17 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "laser_to_gridmap");
     ros::NodeHandle public_nh, private_nh("~");
 
+    std::string laser_topic;
+
     private_nh.param<std::string>("map_frame_id", map_frame_id, "base_footprint");
+    private_nh.param<std::string>("laser_topic", laser_topic, "/scan");
     private_nh.param("height", map_height, 50.0);
     private_nh.param("width", map_width, 50.0);
     private_nh.param("cell_size", cell_size, 0.2);
     private_nh.param("DEBUG", DEBUG, false);
 
     laser_gridmap_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("hypergrid/laser_to_gridmap", 2);
-    ros::Subscriber laser_sub = public_nh.subscribe(laser_topic, 5, "scan");
+    ros::Subscriber laser_sub = public_nh.subscribe(laser_topic, 5, laser_callback);
 
     tf_listener = new tf::TransformListener;
 

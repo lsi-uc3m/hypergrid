@@ -199,20 +199,24 @@ af::array::array_proxy GridMap::cellFromLocal(T x, T y)
 
 /* Add a free line from the vehicle to the given point */
 template<typename T>
-void GridMap::addFreeLine(Point<T> end)
+af::array GridMap::addFreeLine(Point<T> end)
 {
     Cell start_c = cellCoordsFromLocal(0, 0);
     Cell end_c = cellCoordsFromLocal(end);
-    bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
+    dda_(start_c.x, start_c.y, end_c.x, end_c.y);
+    af::array A; 
+    return  A;
 }
 
 /* Add a free line from the start point to  the end point */
 template<typename T>
-void GridMap::addFreeLine(Point<T> start, Point<T> end)
+af::array GridMap::addFreeLine(Point<T> start, Point<T> end)
 {
     Cell start_c = cellCoordsFromLocal(start);
     Cell end_c = cellCoordsFromLocal(end);
-    bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
+    dda_(start_c.x, start_c.y, end_c.x, end_c.y);
+    af::array A; 
+    return  A;
 }
 
 /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
@@ -245,6 +249,46 @@ af::array GridMap::getOriginTransform_() const
                           origin_.position.x, origin_.position.y, 1};
     af::array t_r_matrix(3, 3, t_r_array);
     return t_r_matrix;
+}
+
+/* 
+    DDA algorithm to draw line from one point to another in the occupancy grid.
+*/
+void GridMap::dda_(float x1, float y1, float const x2, float const y2)
+{
+    float x, y, dx, dy, step;
+ 
+	dx=abs(x2-x1);
+	dy=abs(y2-y1);
+ 
+	if(dx>=dy)
+		step=dx;
+	else
+		step=dy;
+    
+	dx=(x2-x1)/step;
+	dy=(y2-y1)/step;
+ 
+    af::array x_arr = af::constant(x1,step);
+    af::array y_arr= af::constant(y1,step);
+    af::array count = af::seq(0,step-1);
+
+    x_arr = x_arr + dx * count;
+    y_arr = y_arr + dy * count;
+   
+    
+    af::array indices(x_arr.dims(0));
+    indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
+
+    bool found_obs = false ;
+
+    grid(indices) = grid(indices).scalar<int>()==OBSTACLE ?  found_obs = true:FREE;
+   
+    
+    if(found_obs)
+    { 
+        return; 
+    }
 }
 
 /* Bresenham algorithm to draw line from one point to another in the occupancy grid.
@@ -317,8 +361,8 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
     template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
     template af::array::array_proxy GridMap::cellFromLocal(TYPE x, TYPE y); \
-    template void GridMap::addFreeLine(Point<TYPE> end);                    \
-    template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
+    template af::array GridMap::addFreeLine(Point<TYPE> end);                    \
+    template af::array GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
 
 
 INSTANTIATE_TEMPLATES(char)

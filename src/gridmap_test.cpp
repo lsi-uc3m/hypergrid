@@ -42,8 +42,9 @@ int main(int argc, char **argv)
 
     //obstacles = af::join(0,obesracle_af,obstacles);
 
-    gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
-    gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
+   // gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
+   // gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
+    //gridmap.addFreeLine(hypergrid::Point<double>(0,0),hypergrid::Point<double>(5,-3));
     gridmap.addFreeLine(hypergrid::Point<double>(5,-3));
     af_print(gridmap.grid);
 
@@ -67,7 +68,7 @@ int main(int argc, char **argv)
     */
 
     // gridmap.clear();
-
+/*
     std::cout << "Local [1, 1] -> Cell coords " << gridmap.cellCoordsFromLocal(1.0, 1.0).str() << std::endl;
     std::cout << "Local [1, 1] cell: " << gridmap.cellFromLocal(1.0, 1.0).scalar<int32_t>() << std::endl;
 
@@ -94,7 +95,7 @@ int main(int argc, char **argv)
    
     // hypergrid::Cell z(3,2);
     // gridmap.localCoordsFromCell(a,b);
-
+*/
     nav_msgs::OccupancyGrid map_msg = gridmap.toMapMsg();
     nav_msgs::OccupancyGrid map_msg2 = gridmap.toMapMsg(); // if you want to publish the original and resized map
    
