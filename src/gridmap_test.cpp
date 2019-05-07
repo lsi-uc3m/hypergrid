@@ -2,24 +2,6 @@
 #include <ros/ros.h>
 
 
-void draw_line(hypergrid::GridMap& gridmap, hypergrid::Cell start, hypergrid::Cell end, int connectivity = 4)
-{
-    hypergrid::LineIterator it(gridmap.grid, start, end, connectivity);
-    for (int i = 0; i < it.size(); i++, it++)
-    {
-        // std::cout << "Iterator pos: " << it().str() << std::endl;
-        gridmap[it()] = hypergrid::GridMap::FREE;
-    }
-}
-
-void draw_line_local(hypergrid::GridMap& gridmap, hypergrid::Pointd start, hypergrid::Pointd end, int connectivity = 4)
-{
-    hypergrid::Cell start_c = gridmap.cellCoordsFromLocal(start);
-    hypergrid::Cell end_c = gridmap.cellCoordsFromLocal(end);
-    draw_line(gridmap, start_c, end_c, connectivity);
-}
-
-
 int main(int argc, char **argv)
 {
     af::info();
@@ -35,7 +17,7 @@ int main(int argc, char **argv)
 
     double width = 28.0;
     double height = 22.0;
-    double cell_size = 1.0;
+    double cell_size = 2.0;
     geometry_msgs::Pose origin;
     origin.position.x = - (width /2);
     origin.position.y = - (height /2);
@@ -63,6 +45,9 @@ int main(int argc, char **argv)
 
     // gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
     // gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
+
+    // af_print(gridmap.grid);
+
     gridmap.addFreeLine(hypergrid::Point<double>(10, 5));
     gridmap.addFreeLine(hypergrid::Point<double>(10, -10));
     gridmap.addFreeLine(hypergrid::Point<double>(-5, 10));
@@ -86,11 +71,27 @@ int main(int argc, char **argv)
     //     // std::cout << "Iterator pos: " << it().str() << std::endl;
     //     gridmap2[it()] = hypergrid::GridMap::FREE;
     // }
-    draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(10, 5));
-    draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(10, -10));
-    draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-5, 10));
-    draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-10, -10));
-    draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-11, -9));
+    // draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(10, 5));
+    // draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(10, -10));
+    // draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-5, 10));
+    // draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-10, -10));
+    // draw_line_local(gridmap2, hypergrid::Point<double>(0, 0), hypergrid::Point<double>(-11, -9));
+
+    hypergrid::Cell start_c = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(0, 0));
+    af::array endpoints(5, 2, s32);
+    endpoints(0, 0) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(10, 5)).x;
+    endpoints(0, 1) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(10, 5)).y;
+    endpoints(1, 0) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(10, -10)).x;
+    endpoints(1, 1) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(10, -10)).y;
+    endpoints(2, 0) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-5, 10)).x;
+    endpoints(2, 1) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-5, 10)).y;
+    endpoints(3, 0) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-10, -10)).x;
+    endpoints(3, 1) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-10, -10)).y;
+    endpoints(4, 0) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-11, -9)).x;
+    endpoints(4, 1) = gridmap2.cellCoordsFromLocal(hypergrid::Point<double>(-11, -9)).y;
+    af_print(endpoints);
+
+    hypergrid::add_lines(gridmap2.grid, hypergrid::GridMap::FREE, start_c.x, start_c.y, endpoints);
 
     gridmap2.cellFromLocal(hypergrid::Point<double>(10, 5)) = hypergrid::GridMap::OBSTACLE;
     gridmap2.cellFromLocal(hypergrid::Point<double>(10, -10)) = hypergrid::GridMap::OBSTACLE;
@@ -98,8 +99,7 @@ int main(int argc, char **argv)
     gridmap2.cellFromLocal(hypergrid::Point<double>(-10, -10)) = hypergrid::GridMap::OBSTACLE;
     gridmap2.cellFromLocal(hypergrid::Point<double>(-11, -9)) = hypergrid::GridMap::OBSTACLE;
 
-    // af_print(gridmap.grid);
-
+    af_print(gridmap2.grid);
     // int example1[] = {1,2,3,4,5,6,7,8,9};
     // int example2[] = {11,22,33,44,55,66,77,88,99};
     // int example3[] = {111,222,333,444,555,666,777,888,999};

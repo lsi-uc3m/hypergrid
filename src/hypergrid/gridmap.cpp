@@ -203,12 +203,7 @@ void GridMap::addFreeLine(Point<T> end)
 {
     Cell start_c = cellCoordsFromLocal(0, 0);
     Cell end_c = cellCoordsFromLocal(end);
-    // bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
-    hypergrid::LineIterator it(grid, start_c, end_c, 4);
-    for (int i = 0; i < it.size(); i++, it++)
-    {
-        cell(it()) = hypergrid::GridMap::FREE;
-    }
+    bresenham_(start_c.x, start_c.y, end_c.x, end_c.y);
 }
 
 /* Add a free line from the start point to  the end point */

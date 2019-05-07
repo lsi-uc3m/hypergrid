@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## System dependencies are found with CMake's conventions
 find_package(ArrayFire REQUIRED)
+find_package(CUDA)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -136,11 +137,36 @@ add_library(gridmap
 ## either from message generation or dynamic reconfigure
 add_dependencies(gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-target_link_libraries(gridmap
-  ${catkin_LIBRARIES}
-  ${ArrayFire_CUDA_LIBRARIES}
-  # ${ArrayFire_CPU_LIBRARIES}
-)
+if (${CUDA_FOUND})
+  message(STATUS "Using custom CUDA kernels")
+
+  CUDA_ADD_LIBRARY(raytracing
+    src/hypergrid/raytracing.cu
+  )
+  target_link_libraries(raytracing
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+  target_link_libraries(gridmap
+    raytracing
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+else()
+  add_library(raytracing
+    src/hypergrid/raytracing.cpp
+  )
+  target_link_libraries(raytracing
+    ${ArrayFire_CPU_LIBRARIES}
+  )
+
+  target_link_libraries(gridmap
+    raytracing
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CPU_LIBRARIES}
+  )
+endif()
+
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -160,14 +186,13 @@ add_dependencies(gridmap_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPOR
 add_dependencies(laser_to_gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(
-  laser_to_gridmap
+target_link_libraries(laser_to_gridmap
   gridmap
   ${catkin_LIBRARIES}
 )
-target_link_libraries(
-  gridmap_test
+target_link_libraries(gridmap_test
   gridmap
+  raytracing
   ${catkin_LIBRARIES}
 )
 

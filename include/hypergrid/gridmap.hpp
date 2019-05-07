@@ -13,7 +13,7 @@
 #include <tf/transform_datatypes.h>
 
 #include <hypergrid/point.hpp>
-#include <hypergrid/line_iterator.hpp>
+#include <hypergrid/raytracing.hpp>
 
 namespace hypergrid
 {
