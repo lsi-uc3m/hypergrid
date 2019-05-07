@@ -199,24 +199,21 @@ af::array::array_proxy GridMap::cellFromLocal(T x, T y)
 
 /* Add a free line from the vehicle to the given point */
 template<typename T>
-af::array GridMap::addFreeLine(Point<T> end)
+void GridMap::addFreeLine(Point<T> end)
 {
     Cell start_c = cellCoordsFromLocal(0, 0);
     Cell end_c = cellCoordsFromLocal(end);
     dda_(start_c.x, start_c.y, end_c.x, end_c.y);
-    af::array A; 
-    return  A;
 }
 
 /* Add a free line from the start point to  the end point */
+/* No need to use cellCoordsFromLocal here because it is already have been used in each node*/
 template<typename T>
-af::array GridMap::addFreeLine(Point<T> start, Point<T> end)
+void GridMap::addFreeLine(Point<T> start, Point<T> end)
 {
-    Cell start_c = cellCoordsFromLocal(start);
-    Cell end_c = cellCoordsFromLocal(end);
-    dda_(start_c.x, start_c.y, end_c.x, end_c.y);
-    af::array A; 
-    return  A;
+    //Cell start_c = cellCoordsFromLocal(start);
+    //Cell end_c = cellCoordsFromLocal(end);
+    dda_(start.x, start.y, end.x, end.y);
 }
 
 /* Apply the inverse map origin transformation to get the cell (in meters) from a local point */
@@ -280,15 +277,8 @@ void GridMap::dda_(float x1, float y1, float const x2, float const y2)
     af::array indices(x_arr.dims(0));
     indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
 
-    bool found_obs = false ;
-
-    grid(indices) = grid(indices).scalar<int>()==OBSTACLE ?  found_obs = true:FREE;
+    grid(indices) = FREE;
    
-    
-    if(found_obs)
-    { 
-        return; 
-    }
 }
 
 /* Bresenham algorithm to draw line from one point to another in the occupancy grid.
@@ -361,8 +351,8 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
     template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
     template af::array::array_proxy GridMap::cellFromLocal(TYPE x, TYPE y); \
-    template af::array GridMap::addFreeLine(Point<TYPE> end);                    \
-    template af::array GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
+    template void GridMap::addFreeLine(Point<TYPE> end);                    \
+    template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
 
 
 INSTANTIATE_TEMPLATES(char)
