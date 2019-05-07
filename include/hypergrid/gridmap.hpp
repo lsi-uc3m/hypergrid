@@ -13,6 +13,7 @@
 #include <tf/transform_datatypes.h>
 
 #include <hypergrid/point.hpp>
+#include <hypergrid/line_iterator.hpp>
 
 namespace hypergrid
 {
@@ -46,7 +47,7 @@ public:
     /* Move constructor */
     GridMap(GridMap&& other_map) noexcept;
     /* Assignement operator */
-    GridMap& operator = (const GridMap& other_point);
+    GridMap& operator = (const GridMap& other_map);
 
     /* Bool conversion operator to check if the map has been initialized */
     inline explicit operator bool() const {return !grid.isempty();}

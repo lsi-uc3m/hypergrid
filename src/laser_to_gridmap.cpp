@@ -72,22 +72,6 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     if (DEBUG) std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
-    // Set the obstacles in the map
-    // Cannot use gfor because of isCellInside check
-    // TODO: Find a way to parallelize this
-    // gfor(af::seq i, scan->ranges.size())
-    for (int i = 0; i < scan->ranges.size(); ++i)
-    {
-        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
-                                                                 obstacles(i, 1).scalar<double>());
-        if (gridmap.isCellInside(obs_coords))
-        {
-            gridmap[obs_coords] = hypergrid::GridMap::OBSTACLE;
-        }
-    }
-
-    if (DEBUG) std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
 
     // Add the free lines to all obstacles
     // Cannot use gfor because of branching inside addFreeLine method and isCellInside check
@@ -106,6 +90,22 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     if (DEBUG) std::cout << "Set lines time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
+    // Set the obstacles in the map
+    // Cannot use gfor because of isCellInside check
+    // TODO: Find a way to parallelize this
+    // gfor(af::seq i, scan->ranges.size())
+    for (int i = 0; i < scan->ranges.size(); ++i)
+    {
+        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
+                                                                 obstacles(i, 1).scalar<double>());
+        if (gridmap.isCellInside(obs_coords))
+        {
+            gridmap[obs_coords] = hypergrid::GridMap::OBSTACLE;
+        }
+    }
+
+    if (DEBUG) std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
+    t0 = ros::Time::now();
     // Publish OccupancyGrid map
     laser_gridmap_pub.publish(gridmap.toMapMsg());
     if (DEBUG) std::cout << "Publish time: " << ros::Time::now() - t0 << std::endl;
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     private_nh.param("DEBUG", DEBUG, false);
 
     laser_gridmap_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("hypergrid/laser_to_gridmap", 2);
-    ros::Subscriber laser_sub = public_nh.subscribe(laser_topic, 5, "scan");
+    ros::Subscriber laser_sub = public_nh.subscribe("scan", 5, laser_callback);
 
     tf_listener = new tf::TransformListener;
 
