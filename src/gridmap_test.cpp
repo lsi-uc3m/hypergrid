@@ -48,11 +48,11 @@ int main(int argc, char **argv)
 
     // af_print(gridmap.grid);
 
-    gridmap.addFreeLine(hypergrid::Point<double>(10, 5));
-    gridmap.addFreeLine(hypergrid::Point<double>(10, -10));
-    gridmap.addFreeLine(hypergrid::Point<double>(-5, 10));
-    gridmap.addFreeLine(hypergrid::Point<double>(-10, -10));
-    gridmap.addFreeLine(hypergrid::Point<double>(-11, -9));
+    gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(10, 5)));
+    gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(10, -10)));
+    gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(-5, 10)));
+    gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(-10, -10)));
+    gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(-11, -9)));
 
     gridmap.cellFromLocal(hypergrid::Point<double>(10, 5)) = hypergrid::GridMap::OBSTACLE;
     gridmap.cellFromLocal(hypergrid::Point<double>(10, -10)) = hypergrid::GridMap::OBSTACLE;
