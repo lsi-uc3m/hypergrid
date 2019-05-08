@@ -72,75 +72,44 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     if (DEBUG) std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
-   
     // Remove outside obstacles
-   
-    af::array obs_coords_array(obstacles.dims(0),2,s32);
-    int size = 0;
-
+    af::array inside_obstacles_coords(obstacles.dims(0), 2, s32);
+    int num_obs_inside = 0;
     for(int i = 0 ; i < obstacles.dims(0); i++)
     {
         hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
                                                                  obstacles(i, 1).scalar<double>());
-       
         if (gridmap.isCellInside(obs_coords))
         {
-            obs_coords_array(size, 0) = obs_coords.x;
-            obs_coords_array(size, 1) = obs_coords.y;
-            size++;
+            inside_obstacles_coords(num_obs_inside, 0) = obs_coords.x;
+            inside_obstacles_coords(num_obs_inside, 1) = obs_coords.y;
+            num_obs_inside++;
         }
     }
 
-    obs_coords_array = obs_coords_array(af::seq(size), af::span);
+    inside_obstacles_coords = inside_obstacles_coords(af::seq(num_obs_inside), af::span);
 
     if (DEBUG) std::cout << "Remove outside obstacles time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
-   
 
-    // Add the free lines to all obstacles
-    // Cannot use gfor because of branching inside addFreeLine method and isCellInside check
+    // Add a free line to each obstacle inside the grid
     // TODO: Find a way to parallelize this
-    // gfor(af::seq i, scan->ranges.size())
-    hypergrid::Cell start = gridmap.cellCoordsFromLocal(trans.getX(),trans.getY()); 
-        
-    for (int i = 0; i < obs_coords_array.dims(0); ++i)
+    // Set the origin of the lines at the sensor point
+    hypergrid::Cell start = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
+
+    for (int i = 0; i < inside_obstacles_coords.dims(0); ++i)
     {
-       // hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
-                                                               //  obstacles(i, 1).scalar<double>());
-        // TODO: Draw the free line from the sensor point, and not from the vehicle center
-        // Check if the obstacle coords lay inside the map before modifying the cell
-      // if (gridmap.isCellInside(obs_coords)) 
-       gridmap.addFreeLine((int)start.x, (int)start.y,obs_coords_array(i, 0).scalar<int>(),obs_coords_array(i, 1).scalar<int>());
+       gridmap.addFreeLine(start.x, start.y,
+                           inside_obstacles_coords(i, 0).scalar<int>(),
+                           inside_obstacles_coords(i, 1).scalar<int>());
     }
-    
 
     if (DEBUG) std::cout << "Set lines time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
-
     // Set the obstacles in the map
-    // Cannot use gfor because of isCellInside check
-    // TODO: Find a way to parallelize this
-    // gfor(af::seq i, scan->ranges.size())
-    
-    /* for (int i = 0; i < scan->ranges.size(); ++i)
-    {
-        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
-                                                                obstacles(i, 1).scalar<double>());
-    
-        if (gridmap.isCellInside(obs_coords))
-        {
-            gridmap[obs_coords] = hypergrid::GridMap::OBSTACLE;
-        }
-    }*/
-
-
-    af::array indices(obs_coords_array(0).dims(0));
-
-    indices = obs_coords_array(af::span,1).as(s32) * gridmap.grid.dims(0) + obs_coords_array(af::span,0).as(s32);
-    
-    gridmap.grid(indices) =  hypergrid::GridMap::OBSTACLE;
-
+    af::array indices = inside_obstacles_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + inside_obstacles_coords(af::span, 0).as(s32);
+    gridmap.grid(indices) = hypergrid::GridMap::OBSTACLE;
 
     if (DEBUG) std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
@@ -158,17 +127,14 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "laser_to_gridmap");
     ros::NodeHandle public_nh, private_nh("~");
 
-    std::string laser_topic;
-
     private_nh.param<std::string>("map_frame_id", map_frame_id, "base_footprint");
-    private_nh.param<std::string>("laser_topic", laser_topic, "/scan");
     private_nh.param("height", map_height, 50.0);
     private_nh.param("width", map_width, 50.0);
     private_nh.param("cell_size", cell_size, 0.2);
     private_nh.param("DEBUG", DEBUG, false);
 
     laser_gridmap_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("hypergrid/laser_to_gridmap", 2);
-    ros::Subscriber laser_sub = public_nh.subscribe(laser_topic, 5, laser_callback);
+    ros::Subscriber laser_sub = public_nh.subscribe("scan", 5, laser_callback);
 
     tf_listener = new tf::TransformListener;
 

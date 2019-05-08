@@ -42,10 +42,10 @@ int main(int argc, char **argv)
 
     //obstacles = af::join(0,obesracle_af,obstacles);
 
-   // gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
-   // gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
-    //gridmap.addFreeLine(hypergrid::Point<double>(0,0),hypergrid::Point<double>(5,-3));
-    gridmap.addFreeLine(hypergrid::Point<double>(5,-3));
+    // gridmap.grid(c.x,c.y) = hypergrid::GridMap::OBSTACLE;
+    // gridmap.grid(6, 7) = hypergrid::GridMap::OBSTACLE;
+    // gridmap.addFreeLine(hypergrid::Point<double>(0,0),hypergrid::Point<double>(5,-3));
+    // gridmap.addFreeLine(hypergrid::Point<double>(5,-3));
     af_print(gridmap.grid);
 
     int example1[] = {1,2,3,4,5,6,7,8,9};

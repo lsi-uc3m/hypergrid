@@ -197,22 +197,16 @@ af::array::array_proxy GridMap::cellFromLocal(T x, T y)
     return cell(p);
 }
 
-/* Add a free line from the vehicle to the given point */
-template<typename T>
-void GridMap::addFreeLine(Point<T> end)
+/* Add a free line from the vehicle to the given cell */
+void GridMap::addFreeLine(Cell end)
 {
-    Cell start_c = cellCoordsFromLocal(0, 0);
-    Cell end_c = cellCoordsFromLocal(end);
-    dda_(start_c.x, start_c.y, end_c.x, end_c.y);
+    Cell start = cellCoordsFromLocal(0, 0);
+    dda_(start.x, start.y, end.x, end.y);
 }
 
-/* Add a free line from the start point to  the end point */
-/* No need to use cellCoordsFromLocal here because it is already have been used in each node*/
-template<typename T>
-void GridMap::addFreeLine(Point<T> start, Point<T> end)
+/* Add a free line from the start cell to the end cell */
+void GridMap::addFreeLine(Cell start, Cell end)
 {
-    //Cell start_c = cellCoordsFromLocal(start);
-    //Cell end_c = cellCoordsFromLocal(end);
     dda_(start.x, start.y, end.x, end.y);
 }
 
@@ -248,37 +242,32 @@ af::array GridMap::getOriginTransform_() const
     return t_r_matrix;
 }
 
-/* 
+/*
     DDA algorithm to draw line from one point to another in the occupancy grid.
 */
 void GridMap::dda_(float x1, float y1, float const x2, float const y2)
 {
     float x, y, dx, dy, step;
- 
-	dx=abs(x2-x1);
-	dy=abs(y2-y1);
- 
-	if(dx>=dy)
-		step=dx;
-	else
-		step=dy;
-    
-	dx=(x2-x1)/step;
-	dy=(y2-y1)/step;
- 
-    af::array x_arr = af::constant(x1,step);
-    af::array y_arr= af::constant(y1,step);
-    af::array count = af::seq(0,step-1);
+
+    dx = abs(x2 - x1);
+    dy = abs(y2 - y1);
+
+    step = dx >= dy ? dx : dy;
+
+    dx = (x2 - x1) / step;
+    dy = (y2 - y1) / step;
+
+    af::array x_arr = af::constant(x1, step);
+    af::array y_arr = af::constant(y1, step);
+    af::array count = af::seq(0, step - 1);
 
     x_arr = x_arr + dx * count;
     y_arr = y_arr + dy * count;
-   
-    
+
     af::array indices(x_arr.dims(0));
     indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
 
     grid(indices) = FREE;
-   
 }
 
 /* Bresenham algorithm to draw line from one point to another in the occupancy grid.
@@ -290,20 +279,20 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
     // If x1 == x2, then it does not matter what we set here
     signed char const ix((delta_x > 0) - (delta_x < 0));
     delta_x = std::abs(delta_x) << 1;
- 
+
     int delta_y(y2 - y1);
     // If y1 == y2, then it does not matter what we set here
     signed char const iy((delta_y > 0) - (delta_y < 0));
     delta_y = std::abs(delta_y) << 1;
- 
+
     if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
     grid(x1, y1) = FREE;
- 
+
     if (delta_x >= delta_y)
     {
         // Error may go below zero
         int error(delta_y - (delta_x >> 1));
- 
+
         while (x1 != x2)
         {
             // Reduce error, while taking into account the corner case of error == 0
@@ -313,10 +302,10 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
                 y1 += iy;
             }
             // Else do nothing
- 
+
             error += delta_y;
             x1 += ix;
- 
+
             if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
             grid(x1, y1) = FREE;
         }
@@ -325,7 +314,7 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
     {
         // Error may go below zero
         int error(delta_x - (delta_y >> 1));
- 
+
         while (y1 != y2)
         {
             // Reduce error, while taking into account the corner case of error == 0
@@ -335,10 +324,10 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
                 x1 += ix;
             }
             // Else do nothing
- 
+
             error += delta_x;
             y1 += iy;
- 
+
             if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
             grid(x1, y1) = FREE;
         }
@@ -350,9 +339,7 @@ void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
 #define INSTANTIATE_TEMPLATES(TYPE)                                         \
     template Cell GridMap::cellCoordsFromLocal<TYPE>(TYPE x, TYPE y);       \
     template Point<TYPE> GridMap::localCoordsFromCell(size_t x, size_t y);  \
-    template af::array::array_proxy GridMap::cellFromLocal(TYPE x, TYPE y); \
-    template void GridMap::addFreeLine(Point<TYPE> end);                    \
-    template void GridMap::addFreeLine(Point<TYPE> start, Point<TYPE> end);
+    template af::array::array_proxy GridMap::cellFromLocal(TYPE x, TYPE y);
 
 
 INSTANTIATE_TEMPLATES(char)
