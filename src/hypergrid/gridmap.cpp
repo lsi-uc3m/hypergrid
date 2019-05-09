@@ -179,11 +179,11 @@ Cell GridMap::cellCoordsFromLocal(T x, T y)
     return Cell(std::floor(t_point.x / cell_size_), std::floor(t_point.y / cell_size_));
 }
 
-af::array GridMap::cellCoordsFromLocal(af::array obstacles) 
+af::array GridMap::cellCoordsFromLocal(af::array local_points)
 {
     af::array transform = getOriginTransform_();
-    af::array coords = af::matmul(af::inverse(transform), obstacles.T()).T();
-    coords = af::floor(coords/cell_size_);
+    af::array coords = af::matmul(af::inverse(transform), local_points.T()).T();
+    coords = af::floor(coords / cell_size_).as(s32);
     return coords;
 }
 
@@ -209,13 +209,13 @@ af::array::array_proxy GridMap::cellFromLocal(T x, T y)
 void GridMap::addFreeLine(Cell end)
 {
     Cell start = cellCoordsFromLocal(0, 0);
-    dda_(start.x, start.y, end.x, end.y);
+    DDA(grid, FREE, start.x, start.y, end.x, end.y);
 }
 
 /* Add a free line from the start cell to the end cell */
 void GridMap::addFreeLine(Cell start, Cell end)
 {
-    dda_(start.x, start.y, end.x, end.y);
+    DDA(grid, FREE, start.x, start.y, end.x, end.y);
 }
 
 /* Add multiple free lines from a given point */
@@ -255,98 +255,6 @@ af::array GridMap::getOriginTransform_() const
                           origin_.position.x, origin_.position.y, 1};
     af::array t_r_matrix(3, 3, t_r_array);
     return t_r_matrix;
-}
-
-/*
-    DDA algorithm to draw line from one point to another in the occupancy grid.
-*/
-void GridMap::dda_(float x1, float y1, float const x2, float const y2)
-{
-    float x, y, dx, dy, step;
-
-    dx = abs(x2 - x1);
-    dy = abs(y2 - y1);
-
-    step = dx >= dy ? dx : dy;
-
-    dx = (x2 - x1) / step;
-    dy = (y2 - y1) / step;
-
-    af::array x_arr = af::constant(x1, step);
-    af::array y_arr = af::constant(y1, step);
-    af::array count = af::seq(0, step - 1);
-
-    x_arr = x_arr + dx * count;
-    y_arr = y_arr + dy * count;
-
-    af::array indices(x_arr.dims(0));
-    indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
-
-    grid(indices) = FREE;
-}
-
-/* Bresenham algorithm to draw line from one point to another in the occupancy grid.
-   Copied from: http://www.roguebasin.com/index.php?title=Bresenham%27s_Line_Algorithm
-*/
-void GridMap::bresenham_(int x1, int y1, int const x2, int const y2)
-{
-    int delta_x(x2 - x1);
-    // If x1 == x2, then it does not matter what we set here
-    signed char const ix((delta_x > 0) - (delta_x < 0));
-    delta_x = std::abs(delta_x) << 1;
-
-    int delta_y(y2 - y1);
-    // If y1 == y2, then it does not matter what we set here
-    signed char const iy((delta_y > 0) - (delta_y < 0));
-    delta_y = std::abs(delta_y) << 1;
-
-    if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
-    grid(x1, y1) = FREE;
-
-    if (delta_x >= delta_y)
-    {
-        // Error may go below zero
-        int error(delta_y - (delta_x >> 1));
-
-        while (x1 != x2)
-        {
-            // Reduce error, while taking into account the corner case of error == 0
-            if ((error > 0) || (!error && (ix > 0)))
-            {
-                error -= delta_x;
-                y1 += iy;
-            }
-            // Else do nothing
-
-            error += delta_y;
-            x1 += ix;
-
-            if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
-            grid(x1, y1) = FREE;
-        }
-    }
-    else
-    {
-        // Error may go below zero
-        int error(delta_x - (delta_y >> 1));
-
-        while (y1 != y2)
-        {
-            // Reduce error, while taking into account the corner case of error == 0
-            if ((error > 0) || (!error && (iy > 0)))
-            {
-                error -= delta_y;
-                x1 += ix;
-            }
-            // Else do nothing
-
-            error += delta_x;
-            y1 += iy;
-
-            if (grid(x1, y1).scalar<int>() == OBSTACLE) return;
-            grid(x1, y1) = FREE;
-        }
-    }
 }
 
 

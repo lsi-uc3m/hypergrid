@@ -91,8 +91,7 @@ public:
     Cell cellCoordsFromLocal(T x, T y);
     template<typename T>
     inline Cell cellCoordsFromLocal(Point<T> p) {return cellCoordsFromLocal(p.x, p.y);}
-
-    af::array cellCoordsFromLocal(af::array);
+    af::array cellCoordsFromLocal(af::array local_points);
 
     /* Local coordinates from cell coords */
     template<typename T>
@@ -137,9 +136,6 @@ protected:
     /* Get the homogeneous matrix of the origin transform */
     af::array getOriginTransform_() const;
 
-    void bresenham_(int x1, int y1, int const x2, int const y2);
-
-    void dda_(float x1, float y1, float const x2, float const y2);
 };
 
 

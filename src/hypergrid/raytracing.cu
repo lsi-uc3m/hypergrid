@@ -13,7 +13,12 @@ void raytracing_kernel(int* grid, int value,
                        size_t endpoints_size)
 {
     int idx = threadIdx.x + blockIdx.x * blockDim.x;
-    if (idx >= endpoints_size) return;
+    if (idx >= endpoints_size ||
+        end_x[idx] >= dim_x   ||
+        end_y[idx] >= dim_x)
+    {
+        return;
+    }
 
     size_t bt_pix0 = 1;
     size_t bt_pix = bt_pix0;
@@ -66,15 +71,23 @@ void raytracing_kernel(int* grid, int value,
     // minus_step_ = (int)bt_pix;
     // size_ = dx + 1;
 
+    size_t grid_size = dim_x * dim_y;
     int mask = 0;
     for (int i = 0; i < size_; i++)
     {
+        // Check if current cell is obstacle
         if (grid[ptr_] == 0) return;
+
+        // Set cell value
         grid[ptr_] = value;
 
+        // Update state
         mask = error_ < 0 ? -1 : 0;
         error_ += minus_delta_ + (plus_delta_ & mask);
         ptr_ += minus_step_ + (plus_step_ & mask);
+
+        // Check if out of bounds
+        if (ptr_ >= grid_size) return;
     }
 }
 
@@ -112,6 +125,5 @@ void add_lines(af::array& grid, int value,
     grid.unlock();
     grid.eval();
 }
-
 
 } // hypergrid namespace
