@@ -179,6 +179,14 @@ Cell GridMap::cellCoordsFromLocal(T x, T y)
     return Cell(std::floor(t_point.x / cell_size_), std::floor(t_point.y / cell_size_));
 }
 
+af::array GridMap::cellCoordsFromLocal(af::array obstacles) 
+{
+    af::array transform = getOriginTransform_();
+    af::array coords = af::matmul(af::inverse(transform), obstacles.T()).T();
+    coords = af::floor(coords/cell_size_);
+    return coords;
+}
+
 /* Local coordinates from cell coords */
 template<typename T>
 Point<T> GridMap::localCoordsFromCell(size_t x, size_t y)

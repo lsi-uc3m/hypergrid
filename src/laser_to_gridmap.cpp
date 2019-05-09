@@ -68,21 +68,27 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     af::array transformation(3, 3, t_r_array);
     // Transform the obstacles to the map frame
     obstacles = af::matmul(transformation, obstacles.T()).T();
-
+    obstacles.eval();
     if (DEBUG) std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
     // Remove outside obstacles
     af::array inside_obstacles_coords(obstacles.dims(0), 2, s32);
     int num_obs_inside = 0;
+    obstacles = gridmap.cellCoordsFromLocal(obstacles);
+
+    if (DEBUG) std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
+    t0 = ros::Time::now();
+
     for(int i = 0 ; i < obstacles.dims(0); i++)
     {
-        hypergrid::Cell obs_coords = gridmap.cellCoordsFromLocal(obstacles(i, 0).scalar<double>(),
-                                                                 obstacles(i, 1).scalar<double>());
-        if (gridmap.isCellInside(obs_coords))
+       int x = obstacles(i,0).scalar<double>();
+       int y = obstacles(i,1).scalar<double>();
+
+        if (gridmap.isCellInside(x,y))
         {
-            inside_obstacles_coords(num_obs_inside, 0) = obs_coords.x;
-            inside_obstacles_coords(num_obs_inside, 1) = obs_coords.y;
+            inside_obstacles_coords(num_obs_inside, 0) = x;
+            inside_obstacles_coords(num_obs_inside, 1) = y;
             num_obs_inside++;
         }
     }

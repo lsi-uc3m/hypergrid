@@ -92,6 +92,8 @@ public:
     template<typename T>
     inline Cell cellCoordsFromLocal(Point<T> p) {return cellCoordsFromLocal(p.x, p.y);}
 
+    af::array cellCoordsFromLocal(af::array);
+
     /* Local coordinates from cell coords */
     template<typename T>
     Point<T> localCoordsFromCell(size_t x, size_t y);
