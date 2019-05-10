@@ -15,6 +15,7 @@
 #include <hypergrid/point.hpp>
 #include <hypergrid/raytracing.hpp>
 
+
 namespace hypergrid
 {
 
@@ -140,5 +141,7 @@ protected:
 
 
 } // hypergrid namespace
+
+#include <hypergrid/pcl_to_gridmap.hpp>
 
 #endif

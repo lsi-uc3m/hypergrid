@@ -173,6 +173,7 @@ endif()
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(gridmap_test src/gridmap_test.cpp)
 add_executable(laser_to_gridmap src/laser_to_gridmap.cpp)
+add_executable(pcl_to_gridmap src/pcl_to_gridmap.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -184,12 +185,19 @@ add_executable(laser_to_gridmap src/laser_to_gridmap.cpp)
 ## same as for the library above
 add_dependencies(gridmap_test ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(laser_to_gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(pcl_to_gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(laser_to_gridmap
   gridmap
   ${catkin_LIBRARIES}
 )
+
+target_link_libraries(pcl_to_gridmap
+  gridmap
+  ${catkin_LIBRARIES}
+)
+
 target_link_libraries(gridmap_test
   gridmap
   raytracing
