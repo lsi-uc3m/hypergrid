@@ -49,27 +49,50 @@ bool is_obstacle(af::array p, const af::array min, const af::array max)
 /* Removes all the points in the floor with a heightmap algorithm */
 void remove_floor(const af::array cloud)
 {
+    int height_cells = map_height / heightmap_cell_size;
+    int width_cells = map_width / heightmap_cell_size;
+
+    af::array min = af::constant(9999.9, width_cells, height_cells);
+    af::array max = af::constant(-9999.9, width_cells, height_cells);
+
+    af::array x_arr = (width_cells / 2) + (cloud(af::seq(0,4),af::span) / heightmap_cell_size);
+    af::array y_arr = (height_cells / 2) + (cloud(af::seq(4,8),af::span) / heightmap_cell_size);
+
+    gfor(af::seq i, cloud.dims(1))
+    {
+        int x = x_arr(i).as(s32).scalar<int>(); 
+        int y = y_arr(i).as(s32).scalar<int>();
+        af::array cond = (x >= 0 && x < width_cells && y >= 0 && y < height_cells);
+        min(i) = (!cond).as(f32) * min(i) + cond.as(f32) * af::min(min(i), cloud(af::seq(8,12),i));
+        max(i) = (!cond).as(f32) * max(i) + cond.as(f32) * af::max(max(i), cloud(af::seq(8,12),i));
+    }
+
 
 }
 
 void cloud_callback(const sensor_msgs::PointCloud2ConstPtr cloud_msg)
 {
-    printf("\nPoint step : %d \n", cloud_msg->point_step);
-
+    ros::Time t0 = ros::Time::now();
+    
     //Convert PointCloud2 to ArrayFire array
+    af::array pcl_points(32, cloud_msg->width, cloud_msg->data.data());
+    
+    //remove Intenisty and Ring Bytes
+    pcl_points = pcl_points(af::seq(12), af::span);
 
-    af::array pcl_points(5, (cloud_msg->width)/5 , cloud_msg->data.data());
-
-   // af_print(pcl_points);
+    //Putting the X,Y,Z bytes into bytes array 
+    uint8_t* x_y_z_bytes = af::flat(pcl_points).host<uint8_t>();
     
-    pcl_points = pcl_points(af::seq(3), af::span);
+    //convertting from bytes array to float array 
+    float f[3*cloud_msg->width] ;
+    std::memcpy(f, x_y_z_bytes, 12*(cloud_msg->width));
+   
+    //putting it to ArrayFire
+    af::array pcl_points2 (3, cloud_msg->width, f); 
     
-    af_print(pcl_points);
-    
-    
-    
-    
-    
+    if (DEBUG) std::cout << "Convert PointCloud2 to ArrayFire array time: " << ros::Time::now() - t0 << std::endl;
+    t0 = ros::Time::now();
+    // af_print(pcl_points2.T());
     
    /* if (floor_filter)
     {
