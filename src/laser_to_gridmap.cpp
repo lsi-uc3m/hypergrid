@@ -76,7 +76,7 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
     af::array obstacle_coords = gridmap.cellCoordsFromLocal(obstacles);
 
     // Remove outside obstacles
-    af::array inside_obstacles_coords(obstacles.dims(0), 2, s32);
+   /* af::array inside_obstacles_coords(obstacles.dims(0), 2, s32);
     int num_obs_inside = 0;
 
     if (DEBUG) std::cout << "Obstacles coordinates time: " << ros::Time::now() - t0 << std::endl;
@@ -94,9 +94,19 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
             num_obs_inside++;
         }
     }
+*/
+    //ussing the sort function only to get the indices array
+    af::array cond;
+    af::array indices_inside;
+    af::sort(cond, indices_inside, gridmap.isCellInside(obstacle_coords), 0, false);
 
-    inside_obstacles_coords = inside_obstacles_coords(af::seq(num_obs_inside), af::span);
+    // getting ony the indices of the obstacles
+    indices_inside = indices_inside(af::seq(af::sum(cond).scalar<unsigned>()));
 
+    //inside_obstacles_coords = inside_obstacles_coords(af::seq(num_obs_inside), af::span);
+    
+    af::array inside_obstacles_coords = af::lookup(obstacle_coords(af::span, af::seq(2)), indices_inside);
+   
     if (DEBUG) std::cout << "Remove outside obstacles time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 

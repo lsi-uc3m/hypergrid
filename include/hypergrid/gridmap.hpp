@@ -76,6 +76,8 @@ public:
     template<typename T>
     inline bool isCellInside(T x, T y) {return (x >= 0 && y >= 0 && x < grid.dims(0) && y < grid.dims(1));}
     inline bool isCellInside(Cell c) {return isCellInside(c.x, c.y);}
+    inline af::array isCellInside(af::array obs){return (obs(af::span,0) >= 0 && obs(af::span,1) >= 0 && obs(af::span,0) < grid.dims(0) 
+                                                        && obs(af::span,1) < grid.dims(1)); }
 
     template<typename T>
     inline bool isLocalInside(T x, T y) {return isCellInside(cellCoordsFromLocal<T>(x, y));}
