@@ -13,8 +13,8 @@
 #include <tf/transform_datatypes.h>
 #include <tf_conversions/tf_eigen.h>
 
-#include <hypergrid/point.hpp>
-#include <hypergrid/raytracing.hpp>
+#include <hypergrid/utils/point.hpp>
+#include <hypergrid/utils/raytracing.hpp>
 
 
 namespace hypergrid

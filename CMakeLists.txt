@@ -133,22 +133,30 @@ add_library(gridmap
   src/hypergrid/gridmap.cpp
 )
 
+add_library(conversions
+  src/hypergrid/conversions/laserscan_converter.cpp
+  src/hypergrid/conversions/lidar_converter.cpp
+)
+
+add_library(hypergrid_layer src/costmap_layer.cpp)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 add_dependencies(gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(conversions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
 
 if (${CUDA_FOUND})
+
   message(STATUS "Using custom CUDA kernels")
 
   CUDA_ADD_LIBRARY(raytracing
-    src/hypergrid/raytracing.cu
+    src/hypergrid/utils/raytracing.cu
   )
   target_link_libraries(raytracing
     ${ArrayFire_CUDA_LIBRARIES}
   )
-  
-  
 
   target_link_libraries(gridmap
     raytracing
@@ -156,10 +164,22 @@ if (${CUDA_FOUND})
     ${ArrayFire_CUDA_LIBRARIES}
   )
 
+  target_link_libraries(conversions
+    gridmap
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+  target_link_libraries(hypergrid_layer
+    gridmap
+    conversions
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
 
 else()
+
   add_library(raytracing
-    src/hypergrid/raytracing.cpp
+    src/hypergrid/utils/raytracing.cpp
   )
   target_link_libraries(raytracing
     ${ArrayFire_CPU_LIBRARIES}
@@ -170,6 +190,19 @@ else()
     ${catkin_LIBRARIES}
     ${ArrayFire_CPU_LIBRARIES}
   )
+
+  target_link_libraries(conversions
+    gridmap
+    ${ArrayFire_CPU_LIBRARIES}
+  )
+
+  target_link_libraries(hypergrid_layer
+    gridmap
+    conversions
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CPU_LIBRARIES}
+  )
+
 endif()
 
 

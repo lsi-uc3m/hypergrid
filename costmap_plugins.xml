@@ -1,0 +1,5 @@
+<library path="lib/libhypergrid_layer">
+  <class type="hypergrid::HypergridLayer" base_class_type="costmap_2d::Layer">
+    <description>Hypergrid Obstacle Layer</description>
+  </class>
+</library>
