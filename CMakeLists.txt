@@ -17,6 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   tf
+  tf_conversions
 )
 
 ## System dependencies are found with CMake's conventions
@@ -146,12 +147,16 @@ if (${CUDA_FOUND})
   target_link_libraries(raytracing
     ${ArrayFire_CUDA_LIBRARIES}
   )
+  
+  
 
   target_link_libraries(gridmap
     raytracing
     ${catkin_LIBRARIES}
     ${ArrayFire_CUDA_LIBRARIES}
   )
+
+
 else()
   add_library(raytracing
     src/hypergrid/raytracing.cpp

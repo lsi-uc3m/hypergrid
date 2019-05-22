@@ -1,6 +1,6 @@
-height: 50.0
-width: 50.0
-cell_size: 0.2
+height: 99.9
+width: 99.9
+cell_size: 0.3
 DEBUG: true
 floor_filter: true
 heightmap_threshold: 0.15

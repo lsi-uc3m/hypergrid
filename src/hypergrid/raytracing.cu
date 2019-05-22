@@ -56,27 +56,27 @@ void raytracing_kernel(int* grid, int value,
     size_t size_ = 0;
 
     // Connectivity 4
-    error_ = 0;
-    plus_delta_ = (dx + dx) + (dy + dy);
-    minus_delta_ = -(dy + dy);
-    plus_step_ = (int)(istep - bt_pix);
-    minus_step_ = (int)bt_pix;
-    size_ = dx + dy + 1;
+    // error_ = 0;
+    // plus_delta_ = (dx + dx) + (dy + dy);
+    // minus_delta_ = -(dy + dy);
+    // plus_step_ = (int)(istep - bt_pix);
+    // minus_step_ = (int)bt_pix;
+    // size_ = dx + dy + 1;
 
     // Connectivity 8
-    // error_ = dx - (dy + dy);
-    // plus_delta_ = dx + dx;
-    // minus_delta_ = -(dy + dy);
-    // plus_step_ = (int)istep;
-    // minus_step_ = (int)bt_pix;
-    // size_ = dx + 1;
+    error_ = dx - (dy + dy);
+    plus_delta_ = dx + dx;
+    minus_delta_ = -(dy + dy);
+    plus_step_ = (int)istep;
+    minus_step_ = (int)bt_pix;
+    size_ = dx + 1;
 
     size_t grid_size = dim_x * dim_y;
     int mask = 0;
     for (int i = 0; i < size_; i++)
     {
         // Check if current cell is obstacle
-        if (grid[ptr_] == 0) return;
+        if (grid[ptr_] == 100) return;
 
         // Set cell value
         grid[ptr_] = value;

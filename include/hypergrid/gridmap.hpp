@@ -11,6 +11,7 @@
 #include <geometry_msgs/Pose.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <tf/transform_datatypes.h>
+#include <tf_conversions/tf_eigen.h>
 
 #include <hypergrid/point.hpp>
 #include <hypergrid/raytracing.hpp>
@@ -143,7 +144,5 @@ protected:
 
 
 } // hypergrid namespace
-
-#include <hypergrid/pcl_to_gridmap.hpp>
 
 #endif

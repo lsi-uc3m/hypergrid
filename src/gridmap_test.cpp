@@ -48,6 +48,16 @@ int main(int argc, char **argv)
 
     // af_print(gridmap.grid);
 
+
+    float a[] = {1,2,3,4};
+    af::array a_arr(4,a);
+
+    float b[] = {0,5,6,7};
+    af::array b_arr(4,b);
+
+    af_print(af::min(a_arr,b_arr));
+
+
     gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(10, 5)));
     gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(10, -10)));
     gridmap.addFreeLine(gridmap.cellCoordsFromLocal(hypergrid::Point<double>(-5, 10)));
