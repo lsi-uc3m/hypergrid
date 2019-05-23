@@ -1,5 +1,6 @@
 #include <cstring>
 #include <hypergrid/gridmap.hpp>
+#include <hypergrid/conversions/lidar_converter.hpp>
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
@@ -105,24 +106,11 @@ void remove_floor(af::array& cloud)
    
 }
 
-void cloud_callback(const sensor_msgs::PointCloud2Ptr cloud_msg)
+void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 {
     ros::Time t0 = ros::Time::now();
     ros::Time t_start = t0;
-    if (DEBUG) std::cout << "\n------------------------\nNew pcl" << std::endl;
-    
-    //Convert PointCloud2 to ArrayFire array
-    // af::array pcl_points(32, cloud_msg->width, cloud_msg->data.data());
-    float* data_f = reinterpret_cast<float *>(cloud_msg->data.data());
-    af::array pcl_points(8, cloud_msg->width, data_f);
    
-    //remove Intenisty and Ring Bytes
-    pcl_points = pcl_points(af::seq(3), af::span);
-   
- 
-    if (DEBUG) std::cout << "Convert PointCloud2 to ArrayFire array time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-    
     tf::StampedTransform pcl_footprint_transform;
     try
     {
@@ -133,87 +121,17 @@ void cloud_callback(const sensor_msgs::PointCloud2Ptr cloud_msg)
         ROS_WARN("Warning: %s", ex.what());
     }
 
-    geometry_msgs::Pose origin;
-    origin.position.x = - (map_width / 2);
-    origin.position.y = - (map_height / 2);
-    origin.orientation.w = 1;   
+    hypergrid::LIDARConverter lidar_converter(map_width, map_height, cell_size,
+                   geometry_msgs::Pose(),
+                   frame_vehicle + "/" + map_frame_id,
+                   heightmap_threshold,
+                   heightmap_cell_size,
+                    max_height ,
+                    vehicle_box_size ,
+                    DEBUG );
 
-    hypergrid::GridMap gridmap(map_width, map_height, cell_size, origin, frame_vehicle + "/" + map_frame_id);
+    hypergrid::GridMap gridmap = lidar_converter.convert(cloud_msg, pcl_footprint_transform);
 
-
-    Eigen::Affine3d e;
-    tf::transformTFToEigen(pcl_footprint_transform, e);
-
-    double t_r_array[] = {  e(0,0), e(1,0), e(2,0), e(3,0),
-                            e(0,1), e(1,1), e(2,1), e(3,1),
-                            e(0,2), e(1,2), e(2,2), e(3,2),
-                            e(0,3), e(1,3), e(2,3), e(3,3) };
-
-    af::array transformation(4, 4, t_r_array);
-    af::array ones = af::constant(1, 1, pcl_points.dims(1));
-    pcl_points = af::join(0,pcl_points, ones);
-        
-        
-    // Transform the obstacles to the map frame
-    pcl_points = (af::matmul(transformation, pcl_points.as(f64))).as(f32);
-    pcl_points = pcl_points(af::seq(3), af::span);
-    std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-
-    if (floor_filter)
-    {
-        // Remove the floor points
-        std::cout << "points before: " << pcl_points.dims(1) << std::endl;
-        remove_floor(pcl_points);
-        std::cout << "points after: " << pcl_points.dims(1) << std::endl;
-    
-        if (DEBUG) std::cout << "remove floor time: " << ros::Time::now() - t0 << std::endl;
-        t0 = ros::Time::now();
-    }
-    
-    af::array obs = (af::join(0,pcl_points(af::seq(2), af::span), ones(af::span, af::seq(pcl_points.dims(1) )))).as(f64) ;
-    
-    pcl_points = pcl_points.T();
-    af::array obstacle_coords =  gridmap.cellCoordsFromLocal(obs.T());
-    
-    
-    af::array conds = ( (!(  (af::isInf(pcl_points(af::span, 0))) || 
-                            (af::isInf(pcl_points(af::span, 1))) ||
-                            (af::isInf(pcl_points(af::span, 2))) ) )
-                             && pcl_points(af::span, 2) < max_height 
-                             && gridmap.isCellInside(obstacle_coords) ) ;
-    
-    
-    //using the sort function only to get the indices array
-    af::array out;
-    af::array indices_inside;
-    af::sort(out, indices_inside, conds, 0, false);    
-    
-    // getting only the indices of the obstacles
-    indices_inside = indices_inside(af::seq(af::sum(conds).scalar<unsigned>()));
-    
-    af::array inside_obstacles_coords = af::lookup(obstacle_coords(af::span, af::seq(2)), indices_inside);
-    std::cout << "Remove outside obstacles time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-    //af_print(inside_obstacles_coords);    
-    tf::Vector3 trans = pcl_footprint_transform.getOrigin();   
-    
-    // Add a free line to each obstacle inside the grid
-    // Set the origin of the lines at the sensor point
-    hypergrid::Cell start = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
-    gridmap.addFreeLines(start, inside_obstacles_coords);   
-    
-    std::cout << "Set free lines time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-    
-    // Set the obstacles in the map
-    af::array indices = inside_obstacles_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + inside_obstacles_coords(af::span, 0).as(s32);
-    gridmap.grid(indices) = hypergrid::GridMap::OBSTACLE;    
-    
-    std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-
-    
     // Publish OccupancyGrid map
     cloud_map_pub.publish(gridmap.toMapMsg());
     if (DEBUG) std::cout << "Publish time: " << ros::Time::now() - t0 << std::endl;
@@ -227,7 +145,6 @@ int main(int argc, char  **argv)
 {
     af::info();
 
-    /* code */
     ros::init(argc, argv, "pcl_to_gridmap");
     ros::NodeHandle nh, priv_nh("~");
 

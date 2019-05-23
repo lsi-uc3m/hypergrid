@@ -25,12 +25,15 @@ public:
                    double heightmap_threshold = 0.15,
                    double heightmap_cell_size = 0.25,
                    double max_height = 2.5,
-                   double vehicle_box_size = 2.0);
+                   double vehicle_box_size = 2.0,
+                   bool DEBUG = true);
 
     /* Convert a sensor_msgs::PointCloud2 to a hypergrid::GridMap */
-    GridMap convert(const sensor_msgs::PointCloud2& cloud_msg, const tf::StampedTransform transform) const;
-    GridMap convert(const sensor_msgs::PointCloud2Ptr& cloud_msg, const tf::StampedTransform transform) const;
-    GridMap convert(const sensor_msgs::PointCloud2ConstPtr& cloud_msg, const tf::StampedTransform transform) const;
+    GridMap convert(sensor_msgs::PointCloud2& cloud_msg, const tf::StampedTransform transform) const;
+    GridMap convert(sensor_msgs::PointCloud2Ptr& cloud_msg, const tf::StampedTransform transform) const;
+    
+    /*remove floor */
+    void remove_floor(af::array& cloud) const;
 
 protected:
     double width_;
@@ -43,7 +46,7 @@ protected:
     double heightmap_cell_size_;
     double max_height_;
     double vehicle_box_size_;
-
+    bool DEBUG_;
 };
 
 

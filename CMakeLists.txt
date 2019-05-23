@@ -228,11 +228,13 @@ add_dependencies(pcl_to_gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 ## Specify libraries to link a library or executable target against
 target_link_libraries(laser_to_gridmap
   gridmap
+  conversions
   ${catkin_LIBRARIES}
 )
 
 target_link_libraries(pcl_to_gridmap
   gridmap
+  conversions
   ${catkin_LIBRARIES}
 )
 

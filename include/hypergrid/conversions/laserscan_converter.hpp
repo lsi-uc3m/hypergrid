@@ -21,7 +21,7 @@ public:
     /* Constructor */
     LaserScanConverter(double width, double height, double cell_size,
                        geometry_msgs::Pose origin = geometry_msgs::Pose(),
-                       std::string map_frame_id = "base_footprint");
+                       std::string map_frame_id = "base_footprint", bool DEBUG_ = true);
 
     /* Convert a sensor_msgs::LaserScan to a hypergrid::GridMap */
     GridMap convert(const sensor_msgs::LaserScan& scan_msg, const tf::StampedTransform transform) const;
@@ -34,6 +34,7 @@ protected:
     double cell_size_;
     geometry_msgs::Pose origin_;
     std::string map_frame_id_;
+    bool DEBUG_;
 };
 
 

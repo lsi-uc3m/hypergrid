@@ -33,6 +33,8 @@ public:
 
 private:
     bool rolling_window_;
+    void laser_map_callback(const sensor_msgs::LaserScan scan_msg);
+    void lidar_map_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
     // TODO
 };
 }
