@@ -38,13 +38,13 @@ void HypergridLayer::onInitialize()
 
 
     geometry_msgs::Pose origin;
-    origin.position.x = - (width / 2);
-    origin.position.y = - (height / 2);
+    origin.position.x = - (width / 2) + cell_size;
+    origin.position.y = - (height / 2) + cell_size;
     origin.orientation.w = 1;   
 
-    // width = layered_costmap_->getCostmap()->getSizeInMetersX();
-    // height = layered_costmap_->getCostmap()->getSizeInMetersY();
-    // cell_size = layered_costmap_->getCostmap()->getResolution();
+    // width = this->getSizeInMetersX();
+    // height = this->getSizeInMetersY();
+    // cell_size = this->getResolution();
 
     // std::cout << "width : " << width << std::endl;
     // std::cout << "height : " << height << std::endl;
@@ -102,7 +102,7 @@ void HypergridLayer::updateBounds(double robot_x, double robot_y, double robot_y
 }
 
 void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j,
-                                                                   int max_i, int max_j)
+                                                                     int max_i, int max_j)
 {
 
     //if (DEBUG) std::cout << "Master grid origin x    : " <<  master_grid.getOriginX()   << "Master grid origin y    : "  << master_grid.getOriginY()  << std::endl; 
@@ -115,16 +115,16 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     else if (DEBUG) std::cout << "size   : " << new_maps_.size() << std::endl;
     
   
+    ros::Time t0 = ros::Time::now();
     hypergrid::GridMap Merged_gridmap =  new_maps_[0];
     for (int i = 1; i < new_maps_.size(); i++)
     {
         Merged_gridmap.grid = af::max(Merged_gridmap.grid, new_maps_[i].grid);
     }
     
-    ros::Time t0 = ros::Time::now();
-   // Merged_gridmap.setOrigin(master_grid.getOriginX(), master_grid.getOriginY());
+    // Merged_gridmap.setOrigin(master_grid.getOriginX(), master_grid.getOriginY());
+    /*
     int numOfObstcales = 0 ;
-   // merged_map_pub.publish(Merged_gridmap.toMapMsg());
     for (int j = min_j; j < max_j; j++)
     {
         for (int i = min_i; i < max_i; i++)
@@ -133,26 +133,25 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
             double wx;
             double wy;
             mapToWorld(i, j, wx, wy);
-           
 
             // Get the local_map cell value corresponding to this costmap cell
             hypergrid::Cell coords = Merged_gridmap.cellCoordsFromLocal(wx, wy);
-        
+
             // Check if the local coords lay inside the map
             if (!Merged_gridmap.isCellInside(coords))
             {
                 master_grid.setCost(i, j, costmap_2d::NO_INFORMATION);
                 continue;
             }
-           
+
             // Get the cell value from local_map
             int cell_value = Merged_gridmap.grid(coords.x, coords.y).scalar<int>();
-            merged_map_pub.publish(Merged_gridmap.toMapMsg());
-            //std::cout << " Cell value    : " <<  cell_value << std::endl;
+            // std::cout << " Cell value    : " <<  cell_value << std::endl;
             switch (cell_value)
             {
-                case hypergrid::GridMap::OBSTACLE :
-                    master_grid.setCost(i, j, costmap_2d::LETHAL_OBSTACLE); numOfObstcales++;
+                case hypergrid::GridMap::OBSTACLE:
+                    master_grid.setCost(i, j, costmap_2d::LETHAL_OBSTACLE);
+                    numOfObstcales++;
                     break;
                 case hypergrid::GridMap::FREE:
                     master_grid.setCost(i, j, costmap_2d::FREE_SPACE);
@@ -163,9 +162,30 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
             }
         }
     }
-    
+    */
+    hypergrid::Cell coords = Merged_gridmap.cellCoordsFromLocal(0, 0);
+    Merged_gridmap.grid.eval();
+    merged_map_pub.publish(Merged_gridmap.toMapMsg());
+
+    // Custom debug modifications
+    int width_cells = this->width / this->cell_size;
+    int height_cells = this->height / this->cell_size;
+
+    // Lookup table
+    unsigned char gridmap_costmap_lut[256] = {(unsigned char)costmap_2d::NO_INFORMATION};
+    gridmap_costmap_lut[hypergrid::GridMap::OBSTACLE] = (unsigned char)costmap_2d::LETHAL_OBSTACLE;
+    gridmap_costmap_lut[hypergrid::GridMap::FREE] = (unsigned char)costmap_2d::FREE_SPACE;
+
+    unsigned char* master_grid_ptr = master_grid.getCharMap();
+    int* merged_grid_ptr = Merged_gridmap.grid.host<int32_t>();
+
+    for (int i = 0; i < width_cells * height_cells; ++i)
+    {
+        master_grid_ptr[i] = gridmap_costmap_lut[merged_grid_ptr[i]];
+    }
+
     new_maps_.clear();
-    if (DEBUG) std::cout << "looooop time: " << ros::Time::now() - t0 << std::endl;
+    if (DEBUG) std::cout << "updateBounds time: " << ros::Time::now() - t0 << std::endl;
 }
 
 void HypergridLayer::laser_callback(const sensor_msgs::LaserScanPtr scan_msg)
