@@ -51,7 +51,7 @@ void HypergridLayer::onInitialize()
     // std::cout << "cell_size : " << cell_size << std::endl;
     
 
-    laser_converter = new hypergrid::LaserScanConverter(width, height, cell_size, origin, map_frame_id);
+    laser_converter = new hypergrid::LaserScanConverter(width, height, cell_size, origin, map_frame_id,false);
 
     lidar_converter = new hypergrid::LIDARConverter(width, height, cell_size,
                                                     origin,
@@ -59,7 +59,7 @@ void HypergridLayer::onInitialize()
                                                     heightmap_threshold,
                                                     heightmap_cell_size,
                                                     max_height ,
-                                                    vehicle_box_size);
+                                                    vehicle_box_size, false);
 
     laserscan_subs_.resize(laser_topics.size());
     
@@ -172,16 +172,17 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     int height_cells = this->height / this->cell_size;
 
     // Lookup table
-    unsigned char gridmap_costmap_lut[256] = {(unsigned char)costmap_2d::NO_INFORMATION};
-    gridmap_costmap_lut[hypergrid::GridMap::OBSTACLE] = (unsigned char)costmap_2d::LETHAL_OBSTACLE;
-    gridmap_costmap_lut[hypergrid::GridMap::FREE] = (unsigned char)costmap_2d::FREE_SPACE;
+    unsigned char gridmap_costmap_lut[256];
+    for (int i = 0; i < 256; ++i) gridmap_costmap_lut[i] = costmap_2d::NO_INFORMATION;
+    gridmap_costmap_lut[(unsigned char)hypergrid::GridMap::OBSTACLE] = costmap_2d::LETHAL_OBSTACLE;
+    gridmap_costmap_lut[(unsigned char)hypergrid::GridMap::FREE] = costmap_2d::FREE_SPACE;
 
     unsigned char* master_grid_ptr = master_grid.getCharMap();
     int* merged_grid_ptr = Merged_gridmap.grid.host<int32_t>();
 
     for (int i = 0; i < width_cells * height_cells; ++i)
     {
-        master_grid_ptr[i] = gridmap_costmap_lut[merged_grid_ptr[i]];
+        master_grid_ptr[i] = gridmap_costmap_lut[(unsigned char)merged_grid_ptr[i]];
     }
 
     new_maps_.clear();
