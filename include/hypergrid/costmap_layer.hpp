@@ -31,10 +31,35 @@ public:
 
     virtual void matchSize();
 
+    void laser_callback(const sensor_msgs::LaserScanPtr scan_msg);
+    void lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
+
+    
+
 private:
+    std::vector<GridMap> new_maps_;
+    std::vector<ros::Subscriber> laserscan_subs_;
+    std::vector<ros::Subscriber> lidar_subs_;
+    ros::Publisher merged_map_pub;
+    std::vector<std::string> laser_topics;
+    std::vector<std::string> lidar_topics;
+    tf::TransformListener* tf_listener_;
+    hypergrid::LaserScanConverter* laser_converter;
+    hypergrid::LIDARConverter* lidar_converter;
+
+    double width;
+    double height;
+    double cell_size; 
+    double heightmap_threshold;
+    double heightmap_cell_size;
+    double max_height;
+    double vehicle_box_size;
+    std::string map_frame_id;
+    bool DEBUG;
+
+
     bool rolling_window_;
-    void laser_map_callback(const sensor_msgs::LaserScan scan_msg);
-    void lidar_map_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
+    
     // TODO
 };
 }

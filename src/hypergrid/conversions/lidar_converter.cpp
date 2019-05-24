@@ -15,7 +15,6 @@ LIDARConverter::LIDARConverter(double width, double height, double cell_size,
     height_ = height;
     cell_size_ = cell_size;
     map_frame_id_ = map_frame_id;
-
     heightmap_threshold_ = heightmap_threshold;
     heightmap_cell_size_ = heightmap_cell_size;
     max_height_ = max_height;
@@ -41,12 +40,7 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     if (DEBUG_) std::cout << "Convert PointCloud2 to ArrayFire array time: " << ros::Time::now() - t0 << std::endl;
     t0 = ros::Time::now();
 
-    geometry_msgs::Pose origin;
-    origin.position.x = - (width_ / 2);
-    origin.position.y = - (height_ / 2);
-    origin.orientation.w = 1;   
-
-    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin, map_frame_id_);
+    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin_, map_frame_id_);
 
 
     Eigen::Affine3d e;

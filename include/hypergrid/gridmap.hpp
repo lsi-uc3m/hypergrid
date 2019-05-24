@@ -72,7 +72,7 @@ public:
     inline double getCellSize() const {return cell_size_;}
     inline std::string getMapFrameId() const {return map_frame_id_;}
     inline geometry_msgs::Pose getOrigin() const {return origin_;}
-
+    inline void setOrigin(double x, double y ){ origin_.position.x = x; origin_.position.y = y; }
     /* Check if the cell / local coordinates lay on the map */
     template<typename T>
     inline bool isCellInside(T x, T y) {return (x >= 0 && y >= 0 && x < grid.dims(0) && y < grid.dims(1));}

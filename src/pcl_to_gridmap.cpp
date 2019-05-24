@@ -114,7 +114,7 @@ void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     tf::StampedTransform pcl_footprint_transform;
     try
     {
-        tf_listener->lookupTransform(frame_vehicle + "/" + map_frame_id, cloud_msg->header.frame_id , ros::Time(0), pcl_footprint_transform);
+        tf_listener->lookupTransform(map_frame_id, cloud_msg->header.frame_id , ros::Time(0), pcl_footprint_transform);
     }
     catch(tf::TransformException &ex)
     {
@@ -123,7 +123,7 @@ void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 
     hypergrid::LIDARConverter lidar_converter(map_width, map_height, cell_size,
                    geometry_msgs::Pose(),
-                   frame_vehicle + "/" + map_frame_id,
+                    map_frame_id,
                    heightmap_threshold,
                    heightmap_cell_size,
                     max_height ,

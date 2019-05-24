@@ -21,11 +21,8 @@ GridMap LaserScanConverter::convert(const sensor_msgs::LaserScan& scan_msg, cons
 {
     ros::Time t0 = ros::Time::now();
     if (DEBUG_) std::cout << "\n------------------------\nNew laser" << std::endl;
-    geometry_msgs::Pose origin;
-    origin.position.x = 0.0;
-    origin.position.y = - (height_ /2);
 
-    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin, map_frame_id_);
+    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin_, map_frame_id_);
 
     af::array ranges(scan_msg.ranges.size(), 1, scan_msg.ranges.data());
     af::array scan_angle(scan_msg.ranges.size(), 1);

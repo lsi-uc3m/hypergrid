@@ -33,8 +33,11 @@ void laser_callback(const sensor_msgs::LaserScanConstPtr scan)
         ROS_ERROR("%s", ex.what());
         return;
     }
-   
-    hypergrid::LaserScanConverter laser_converter(map_width, map_height, cell_size, geometry_msgs::Pose(), map_frame_id); 
+    geometry_msgs::Pose origin;
+    origin.position.x = 0;
+    origin.position.y = - (map_height / 2);
+    origin.orientation.w = 1;   
+    hypergrid::LaserScanConverter laser_converter(map_width, map_height, cell_size, origin, map_frame_id); 
    
     hypergrid::GridMap gridmap = laser_converter.convert(scan, laser_footprint_transform);
     // Publish OccupancyGrid map
