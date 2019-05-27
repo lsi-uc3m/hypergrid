@@ -1,5 +1,5 @@
 #include <hypergrid/utils/raytracing.hpp>
-
+#include <iostream>
 
 namespace hypergrid
 {
@@ -20,16 +20,18 @@ void DDA(af::array& grid, int value,
     dx = (end_x - start_x) / step;
     dy = (end_y - start_y) / step;
 
-    af::array x_arr = af::constant(start_x, step);
-    af::array y_arr = af::constant(start_y, step);
-    af::array count = af::seq(0, step - 1);
+    if(step!=0){
+        af::array x_arr = af::constant(start_x, step);
+        af::array y_arr = af::constant(start_y, step);
+        af::array count = af::seq(0, step - 1);
 
-    x_arr += dx * count;
-    y_arr += dy * count;
+        x_arr += dx * count;
+        y_arr += dy * count;
 
-    af::array indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
+        af::array indices = y_arr.as(s32) * grid.dims(0) + x_arr.as(s32);
 
-    grid(indices) = value;
+        grid(indices) = value;
+    }
 }
 
 void add_lines(af::array& grid, int value,
@@ -39,6 +41,7 @@ void add_lines(af::array& grid, int value,
     // Obtain device pointer from array object
     int *device_end_x = endpoints(af::span, 0).device<int>();
     int *device_end_y = endpoints(af::span, 1).device<int>();
+    
 
     // Remove duplicated endpoints
     size_t lut_size = grid.dims(0) * grid.dims(1);
@@ -60,12 +63,16 @@ void add_lines(af::array& grid, int value,
         }
     }
 
+    
+
     // Draw the free lines
     for (int i = 0; i < unique_end_x.size(); ++i)
     {
+       
         DDA(grid, value, start_x, start_y,
             unique_end_x[i], unique_end_y[i]);
     }
+    
 }
 
 

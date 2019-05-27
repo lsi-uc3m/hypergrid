@@ -10,6 +10,7 @@ HypergridLayer::HypergridLayer() {}
 
 void HypergridLayer::onInitialize()
 {
+    af::info();
     ros::NodeHandle private_nh("~/" + name_);
     ros::NodeHandle public_nh;
 
