@@ -132,6 +132,26 @@ void add_lines(af::array& grid, int value,
     int *device_end_x = endpoints(af::span, 0).device<int>();
     int *device_end_y = endpoints(af::span, 1).device<int>();
 
+    // Remove duplicated endpoints
+    size_t lut_size = grid.dims(0) * grid.dims(1);
+    std::vector<bool> index_lut(lut_size, false);
+    std::vector<int> unique_end_x;
+    unique_end_x.reserve(endpoints.dims(0));
+    std::vector<int> unique_end_y;
+    unique_end_y.reserve(endpoints.dims(0));
+
+    for (int i = 0; i < endpoints.dims(0); ++i)
+    {
+        int global_idx = device_end_x[i] * grid.dims(0) + device_end_y[i];
+        if (global_idx >= lut_size) continue;
+        if (!index_lut[global_idx])
+        {
+            unique_end_x.push_back(device_end_x[i]);
+            unique_end_y.push_back(device_end_y[i]);
+            index_lut[global_idx] = true;
+        }
+    }
+
     // Determine ArrayFire's CUDA stream
     int af_id = af::getDevice();
     int cuda_id = afcu::getNativeId(af_id);
@@ -142,7 +162,7 @@ void add_lines(af::array& grid, int value,
     int grid_size = (endpoints.dims(0) + block_size - 1) / block_size;
     raytracing_kernel<<<grid_size, block_size, 0, af_cuda_stream>>>(device_grid, value,
                                                                     start_x, start_y,
-                                                                    device_end_x, device_end_y,
+                                                                    unique_end_x.data(), unique_end_y.data(),
                                                                     grid.dims(0), grid.dims(1),
                                                                     endpoints.dims(0));
     // Finish any pending CUDA operations

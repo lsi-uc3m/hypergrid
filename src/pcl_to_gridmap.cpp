@@ -121,14 +121,19 @@ void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
         ROS_WARN("Warning: %s", ex.what());
     }
 
+    geometry_msgs::Pose origin;
+    origin.position.x = - (map_width / 2) + cell_size;
+    origin.position.y = - (map_height / 2) + cell_size;
+    origin.orientation.w = 1;
+
     hypergrid::LIDARConverter lidar_converter(map_width, map_height, cell_size,
-                   geometry_msgs::Pose(),
-                    map_frame_id,
-                   heightmap_threshold,
-                   heightmap_cell_size,
-                    max_height ,
-                    vehicle_box_size ,
-                    DEBUG );
+                                              origin,
+                                              map_frame_id,
+                                              heightmap_threshold,
+                                              heightmap_cell_size,
+                                              max_height,
+                                              vehicle_box_size,
+                                              DEBUG);
 
     hypergrid::GridMap gridmap = lidar_converter.convert(cloud_msg, pcl_footprint_transform);
 

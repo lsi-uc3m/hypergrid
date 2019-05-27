@@ -118,7 +118,7 @@ public:
     {
         addFreeLine(Cell(x1, y1), Cell(x2, y2));
     }
-    /* Add multiple free lines from a given point */
+    /* Add multiple free lines from a given point to given end points */
     void addFreeLines(Cell start, af::array endpoints);
 
     /* 2D matrix containing the map. Data type is 32 bit signed integer to avoid conversion in the GPU. */
