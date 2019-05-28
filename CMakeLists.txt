@@ -146,37 +146,37 @@ add_library(hypergrid_layer src/costmap_layer.cpp)
 add_dependencies(gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(conversions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-##
-##if (${CUDA_FOUND})
-##
-##  message(STATUS "Using custom CUDA kernels")
-##
-##  CUDA_ADD_LIBRARY(raytracing
-##    src/hypergrid/utils/raytracing.cu
-##  )
-##  target_link_libraries(raytracing
-##    ${ArrayFire_CUDA_LIBRARIES}
-##  )
-##
-##  target_link_libraries(gridmap
-##    raytracing
-##    ${catkin_LIBRARIES}
-##    ${ArrayFire_CUDA_LIBRARIES}
-##  )
-##
-##  target_link_libraries(conversions
-##    gridmap
-##    ${ArrayFire_CUDA_LIBRARIES}
-##  )
-##
-##  target_link_libraries(hypergrid_layer
-##    gridmap
-##    conversions
-##    ${catkin_LIBRARIES}
-##    ${ArrayFire_CUDA_LIBRARIES}
-##  )
-##
-##else()
+##${CUDA_FOUND} = false
+if (${CUDA_FOUND})
+
+  message(STATUS "Using custom CUDA kernels")
+
+  CUDA_ADD_LIBRARY(raytracing
+    src/hypergrid/utils/raytracing.cu
+  )
+  target_link_libraries(raytracing
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+  target_link_libraries(gridmap
+    raytracing
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+  target_link_libraries(conversions
+    gridmap
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+  target_link_libraries(hypergrid_layer
+    gridmap
+    conversions
+    ${catkin_LIBRARIES}
+    ${ArrayFire_CUDA_LIBRARIES}
+  )
+
+else()
 
   add_library(raytracing
     src/hypergrid/utils/raytracing.cpp
@@ -203,7 +203,7 @@ add_dependencies(conversions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORT
     ${ArrayFire_CPU_LIBRARIES}
   )
 
-##endif()
+endif()
 
 
 ## Declare a C++ executable

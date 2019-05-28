@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cmath>
 #include <memory>
+#include <chrono>
 
 #include <arrayfire.h>
 

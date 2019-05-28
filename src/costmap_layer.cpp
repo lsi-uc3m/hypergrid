@@ -52,7 +52,7 @@ void HypergridLayer::onInitialize()
     // std::cout << "cell_size : " << cell_size << std::endl;
     
 
-    laser_converter = new hypergrid::LaserScanConverter(width, height, cell_size, origin, map_frame_id,false);
+    laser_converter = new hypergrid::LaserScanConverter(width, height, cell_size, origin, map_frame_id,DEBUG);
 
     lidar_converter = new hypergrid::LIDARConverter(width, height, cell_size,
                                                     origin,
@@ -60,7 +60,7 @@ void HypergridLayer::onInitialize()
                                                     heightmap_threshold,
                                                     heightmap_cell_size,
                                                     max_height ,
-                                                    vehicle_box_size, false);
+                                                    vehicle_box_size, DEBUG);
 
     laserscan_subs_.resize(laser_topics.size());
     
@@ -211,6 +211,9 @@ void HypergridLayer::laser_callback(const sensor_msgs::LaserScanPtr scan_msg)
 
 void HypergridLayer::lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 {
+    auto whole_time = std::chrono::high_resolution_clock::now(); 
+    // unsync the I/O of C and C++. 
+    std::ios_base::sync_with_stdio(false); 
 
     tf::StampedTransform lidar_footprint_transform;
     try
@@ -224,6 +227,13 @@ void HypergridLayer::lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     }
 
     new_maps_.push_back(lidar_converter->convert(cloud_msg, lidar_footprint_transform));
+
+    // Time
+     if (DEBUG) {std::cout << "Lidar Callback Time :: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - whole_time).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+    } 
 }
 
 } // end namespace

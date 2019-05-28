@@ -1,6 +1,5 @@
 #include <hypergrid/conversions/lidar_converter.hpp>
 
-
 namespace hypergrid
 {
 
@@ -26,19 +25,36 @@ LIDARConverter::LIDARConverter(double width, double height, double cell_size,
 /* Convert a sensor_msgs::PointCloud2 to a hypergrid::GridMap */
 GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::StampedTransform transform) const
 {
-    ros::Time t0 = ros::Time::now();
-    ros::Time t_start = t0;
+    auto start = std::chrono::high_resolution_clock::now(); 
+    
+  
+    // unsync the I/O of C and C++. 
+    std::ios_base::sync_with_stdio(false); 
+  
+  
+
+    
+
+    // ros::Time t0 = ros::Time::now();
+    // ros::Time t_start = t0;
     if (DEBUG_) std::cout << "\n------------------------\nNew pcl" << std::endl;
     
     //Convert PointCloud2 to ArrayFire array
     float* data_f = reinterpret_cast<float *>(cloud_msg.data.data());
-    af::array pcl_points(8, cloud_msg.width, data_f);
+    af::array pcl_points(8, cloud_msg.width*cloud_msg.height, data_f);
    
     //remove Intenisty and Ring Bytes
     pcl_points = pcl_points(af::seq(3), af::span);
 
-    if (DEBUG_) std::cout << "Convert PointCloud2 to ArrayFire array time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
+    // if (DEBUG_) std::cout << "Convert PointCloud2 to ArrayFire array time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
+
+    if (DEBUG_) {std::cout << "Convert PointCloud2 to ArrayFire array time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
 
     hypergrid::GridMap gridmap(width_, height_, cell_size_, origin_, map_frame_id_);
 
@@ -59,25 +75,38 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     // Transform the obstacles to the map frame
     pcl_points = (af::matmul(transformation, pcl_points.as(f64))).as(f32);
     pcl_points = pcl_points(af::seq(3), af::span);
-    std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
-
+    // std::cout << "Obstacles transform time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
+    if (DEBUG_) {std::cout << "Obstacles transform time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
     
     
 
     std::cout << "points before: " << pcl_points.dims(1) << std::endl;
-    
+    af::sync();
     // Remove the floor points
     remove_floor(pcl_points);
 
+
     std::cout << "points after: " << pcl_points.dims(1) << std::endl;
 
-    if (DEBUG_) std::cout << "remove floor time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
+    // if (DEBUG_) std::cout << "remove floor time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
+
+    if (DEBUG_) {std::cout << "remove floor time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
     
-    
+    pcl_points.eval();
     af::array obs = (af::join(0,pcl_points(af::seq(2), af::span), ones(af::span, af::seq(pcl_points.dims(1) )))).as(f64) ;
-    
+
     pcl_points = pcl_points.T();
     af::array obstacle_coords =  gridmap.cellCoordsFromLocal(obs.T());
     
@@ -98,25 +127,48 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     indices_inside = indices_inside(af::seq(af::sum(conds).scalar<unsigned>()));
     
     af::array inside_obstacles_coords = af::lookup(obstacle_coords(af::span, af::seq(2)), indices_inside);
-    std::cout << "Remove outside obstacles time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
+    // std::cout << "Remove outside obstacles time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
     //af_print(inside_obstacles_coords);    
+    if (DEBUG_) {std::cout << "Remove outside obstacles time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
+    
     tf::Vector3 trans = transform.getOrigin();   
     
     // Add a free line to each obstacle inside the grid
     // Set the origin of the lines at the sensor point
-    hypergrid::Cell start = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
-    gridmap.addFreeLines(start, inside_obstacles_coords);   
+    hypergrid::Cell start_cell = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
+    gridmap.addFreeLines(start_cell, inside_obstacles_coords);   
     
-    std::cout << "Set free lines time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
+    // std::cout << "Set free lines time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
+
+    if (DEBUG_) {std::cout << "Set free lines time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
     
     // Set the obstacles in the map
     af::array indices = inside_obstacles_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + inside_obstacles_coords(af::span, 0).as(s32);
     gridmap.grid(indices) = hypergrid::GridMap::OBSTACLE;    
     
-    std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
-    t0 = ros::Time::now();
+    // std::cout << "Set obstacles time: " << ros::Time::now() - t0 << std::endl;
+    // t0 = ros::Time::now();
+
+    if (DEBUG_) {std::cout << "Set obstacles time: " << std::fixed  
+         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - start).count()) * 1e-9
+          << std::setprecision(9); 
+        std::cout << " sec" << std::endl; 
+        start = std::chrono::high_resolution_clock::now(); 
+    } 
+
+    
 
     return gridmap;
 
@@ -130,22 +182,23 @@ GridMap LIDARConverter::convert( sensor_msgs::PointCloud2Ptr& cloud_msg, const t
 /* Removes all the points in the floor with a heightmap algorithm */
 void LIDARConverter::remove_floor(af::array& cloud) const
 {
+    std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
     float* x = cloud(0, af::span).host<float>();
     float* y = cloud(1, af::span).host<float>();
     float* z = cloud(2, af::span).host<float>();
 
     int height_cells = height_ / heightmap_cell_size_;
     int width_cells = width_ / heightmap_cell_size_;
- 
+
     af::array x_arr = (width_cells / 2) + (cloud(0, af::span) / heightmap_cell_size_);
     af::array y_arr = (height_cells / 2) + (cloud(1, af::span) / heightmap_cell_size_);
     af::array z_arr = cloud(2, af::span);
-
+    std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
     float* min = new float[width_cells * height_cells];
     float* max = new float[width_cells * height_cells];
 
     // Resize the cloud to make it non-organized and work faster
-    int width = cloud.dims(0) * cloud.dims(1);
+    int width = cloud.dims(1);
     int height = 1;
     
     // Init maps
@@ -160,7 +213,7 @@ void LIDARConverter::remove_floor(af::array& cloud) const
     }
 
     // Build height map
-    for (int i = 0; i < cloud.dims(1); ++i)
+    for (int i = 0; i < width; ++i)
     {
         int x_idx = (width_cells / 2) + (x[i] / heightmap_cell_size_);
         int y_idx = (height_cells / 2) + (y[i] / heightmap_cell_size_);
@@ -186,6 +239,7 @@ void LIDARConverter::remove_floor(af::array& cloud) const
                            ((max[index] - min[index]) > heightmap_threshold_);                                   // Point is inside a cell considered obstacle by the heightmap
         if (is_obstacle) indices.push_back(i);
     }
+    std::cout << "points inside revmove floor: " << indices.size() << std::endl;
 
     af::array indices_arr(indices.size(), indices.data());
     delete[] x;
@@ -193,6 +247,8 @@ void LIDARConverter::remove_floor(af::array& cloud) const
     delete[] z;
     delete[] min;
     delete[] max;
+    std::cout << "index size revmove floor: " << indices_arr.dims(0) <<   "    " <<  indices_arr.dims(1) << std::endl;
+
     cloud = af::lookup(cloud, indices_arr, 1);
    
 }
