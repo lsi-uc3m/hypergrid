@@ -38,3 +38,6 @@ CATKIN_IGNORE
 *.pyc
 .#*
 *.cpp.autosave.*
+
+launch/costmap_launch/
+
