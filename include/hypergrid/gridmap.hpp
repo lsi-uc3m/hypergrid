@@ -5,6 +5,8 @@
 #include <cmath>
 #include <memory>
 #include <chrono>
+#include <fstream>
+#include <limits>
 
 #include <arrayfire.h>
 

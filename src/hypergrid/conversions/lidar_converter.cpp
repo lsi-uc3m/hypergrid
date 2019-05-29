@@ -86,13 +86,13 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     
     
 
-    std::cout << "points before: " << pcl_points.dims(1) << std::endl;
-    af::sync();
+    if (DEBUG_)std::cout << "points before: " << pcl_points.dims(1) << std::endl;
+    //af::sync();
     // Remove the floor points
     remove_floor(pcl_points);
 
 
-    std::cout << "points after: " << pcl_points.dims(1) << std::endl;
+    if (DEBUG_)std::cout << "points after: " << pcl_points.dims(1) << std::endl;
 
     // if (DEBUG_) std::cout << "remove floor time: " << ros::Time::now() - t0 << std::endl;
     // t0 = ros::Time::now();
@@ -182,7 +182,7 @@ GridMap LIDARConverter::convert( sensor_msgs::PointCloud2Ptr& cloud_msg, const t
 /* Removes all the points in the floor with a heightmap algorithm */
 void LIDARConverter::remove_floor(af::array& cloud) const
 {
-    std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
+    if (DEBUG_) std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
     float* x = cloud(0, af::span).host<float>();
     float* y = cloud(1, af::span).host<float>();
     float* z = cloud(2, af::span).host<float>();
@@ -193,7 +193,7 @@ void LIDARConverter::remove_floor(af::array& cloud) const
     af::array x_arr = (width_cells / 2) + (cloud(0, af::span) / heightmap_cell_size_);
     af::array y_arr = (height_cells / 2) + (cloud(1, af::span) / heightmap_cell_size_);
     af::array z_arr = cloud(2, af::span);
-    std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
+    if (DEBUG_) std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
     float* min = new float[width_cells * height_cells];
     float* max = new float[width_cells * height_cells];
 
@@ -239,7 +239,7 @@ void LIDARConverter::remove_floor(af::array& cloud) const
                            ((max[index] - min[index]) > heightmap_threshold_);                                   // Point is inside a cell considered obstacle by the heightmap
         if (is_obstacle) indices.push_back(i);
     }
-    std::cout << "points inside revmove floor: " << indices.size() << std::endl;
+    
 
     af::array indices_arr(indices.size(), indices.data());
     delete[] x;
@@ -247,7 +247,6 @@ void LIDARConverter::remove_floor(af::array& cloud) const
     delete[] z;
     delete[] min;
     delete[] max;
-    std::cout << "index size revmove floor: " << indices_arr.dims(0) <<   "    " <<  indices_arr.dims(1) << std::endl;
 
     cloud = af::lookup(cloud, indices_arr, 1);
    

@@ -1,6 +1,8 @@
 #include <hypergrid/costmap_layer.hpp>
 #include <pluginlib/class_list_macros.h>
 
+const std::string TIMING_PATH = "/home/sobky/costmap_output";
+
 PLUGINLIB_EXPORT_CLASS(hypergrid::HypergridLayer, costmap_2d::Layer)
 
 namespace hypergrid
@@ -91,6 +93,9 @@ void HypergridLayer::matchSize()
 void HypergridLayer::updateBounds(double robot_x, double robot_y, double robot_yaw,
                                 double* min_x, double* min_y, double* max_x, double* max_y)
 {
+    auto t0 = std::chrono::high_resolution_clock::now();
+
+
     if (rolling_window_)
     {
         updateOrigin(robot_x - getSizeInMetersX() / 2, robot_y - getSizeInMetersY() / 2);
@@ -100,14 +105,23 @@ void HypergridLayer::updateBounds(double robot_x, double robot_y, double robot_y
     *min_y = std::min(*min_y, getOriginY());
     *max_x = std::max(*max_x, getSizeInMetersX() + getOriginX());
     *max_y = std::max(*max_y, getSizeInMetersY() + getOriginY());
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
+    std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_updateBounds.csv", std::ios_base::app);
+    time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+    time_file.close();
+
+   
 }
 
 void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j,
                                                                      int max_i, int max_j)
 {
 
-    //if (DEBUG) std::cout << "Master grid origin x    : " <<  master_grid.getOriginX()   << "Master grid origin y    : "  << master_grid.getOriginY()  << std::endl; 
+    auto t0 = std::chrono::high_resolution_clock::now();
     
+
     if(new_maps_.size()==0)
     {
         ROS_WARN("Now new map received yet: costmap will NOT be updated");
@@ -116,57 +130,16 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     else if (DEBUG) std::cout << "size   : " << new_maps_.size() << std::endl;
     
   
-    ros::Time t0 = ros::Time::now();
     hypergrid::GridMap Merged_gridmap =  new_maps_[0];
+    merged_map_pub.publish(Merged_gridmap.toMapMsg());
     for (int i = 1; i < new_maps_.size(); i++)
     {
         Merged_gridmap.grid = af::max(Merged_gridmap.grid, new_maps_[i].grid);
     }
     
-    // Merged_gridmap.setOrigin(master_grid.getOriginX(), master_grid.getOriginY());
-    /*
-    int numOfObstcales = 0 ;
-    for (int j = min_j; j < max_j; j++)
-    {
-        for (int i = min_i; i < max_i; i++)
-        {
-            // Get the cell coordinates in meters
-            double wx;
-            double wy;
-            mapToWorld(i, j, wx, wy);
-
-            // Get the local_map cell value corresponding to this costmap cell
-            hypergrid::Cell coords = Merged_gridmap.cellCoordsFromLocal(wx, wy);
-
-            // Check if the local coords lay inside the map
-            if (!Merged_gridmap.isCellInside(coords))
-            {
-                master_grid.setCost(i, j, costmap_2d::NO_INFORMATION);
-                continue;
-            }
-
-            // Get the cell value from local_map
-            int cell_value = Merged_gridmap.grid(coords.x, coords.y).scalar<int>();
-            // std::cout << " Cell value    : " <<  cell_value << std::endl;
-            switch (cell_value)
-            {
-                case hypergrid::GridMap::OBSTACLE:
-                    master_grid.setCost(i, j, costmap_2d::LETHAL_OBSTACLE);
-                    numOfObstcales++;
-                    break;
-                case hypergrid::GridMap::FREE:
-                    master_grid.setCost(i, j, costmap_2d::FREE_SPACE);
-                    break;
-                default:
-                    master_grid.setCost(i, j, costmap_2d::NO_INFORMATION);
-                    break;
-            }
-        }
-    }
-    */
     hypergrid::Cell coords = Merged_gridmap.cellCoordsFromLocal(0, 0);
     Merged_gridmap.grid.eval();
-    merged_map_pub.publish(Merged_gridmap.toMapMsg());
+    
 
     // Custom debug modifications
     int width_cells = this->width / this->cell_size;
@@ -178,6 +151,7 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     gridmap_costmap_lut[(unsigned char)hypergrid::GridMap::OBSTACLE] = costmap_2d::LETHAL_OBSTACLE;
     gridmap_costmap_lut[(unsigned char)hypergrid::GridMap::FREE] = costmap_2d::FREE_SPACE;
 
+    
     unsigned char* master_grid_ptr = master_grid.getCharMap();
     int* merged_grid_ptr = Merged_gridmap.grid.host<int32_t>();
 
@@ -187,12 +161,18 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
     }
 
     new_maps_.clear();
-    if (DEBUG) std::cout << "updateBounds time: " << ros::Time::now() - t0 << std::endl;
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
+    std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_updateCosts.csv", std::ios_base::app);
+    time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+    time_file.close();
 }
 
 void HypergridLayer::laser_callback(const sensor_msgs::LaserScanPtr scan_msg)
 {
-    ROS_WARN("laser call back ");
+    auto t0 = std::chrono::high_resolution_clock::now();
+
     tf::StampedTransform laser_footprint_transform;
     try
     {
@@ -206,14 +186,18 @@ void HypergridLayer::laser_callback(const sensor_msgs::LaserScanPtr scan_msg)
 
     hypergrid::GridMap gridmap =  laser_converter->convert(scan_msg, laser_footprint_transform);
     new_maps_.push_back(gridmap);
-    ROS_WARN("laser call back FINISHED");
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
+    std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_laser_callback.csv", std::ios_base::app);
+    time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+    time_file.close();
 }
 
 void HypergridLayer::lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 {
-    auto whole_time = std::chrono::high_resolution_clock::now(); 
-    // unsync the I/O of C and C++. 
-    std::ios_base::sync_with_stdio(false); 
+    auto t0 = std::chrono::high_resolution_clock::now();
+    
 
     tf::StampedTransform lidar_footprint_transform;
     try
@@ -228,12 +212,12 @@ void HypergridLayer::lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 
     new_maps_.push_back(lidar_converter->convert(cloud_msg, lidar_footprint_transform));
 
-    // Time
-     if (DEBUG) {std::cout << "Lidar Callback Time :: " << std::fixed  
-         << (std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::high_resolution_clock::now() - whole_time).count()) * 1e-9
-          << std::setprecision(9); 
-        std::cout << " sec" << std::endl; 
-    } 
+    auto end = std::chrono::high_resolution_clock::now();
+    double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
+    std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_lidar_callback.csv", std::ios_base::app);
+    time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+    time_file.close();
+  
 }
 
 } // end namespace

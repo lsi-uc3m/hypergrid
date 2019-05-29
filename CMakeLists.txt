@@ -146,7 +146,7 @@ add_library(hypergrid_layer src/costmap_layer.cpp)
 add_dependencies(gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 add_dependencies(conversions ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-##${CUDA_FOUND} = false
+
 if (${CUDA_FOUND})
 
   message(STATUS "Using custom CUDA kernels")
