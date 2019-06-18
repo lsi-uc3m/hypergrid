@@ -20,8 +20,11 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
 )
 
+##set(PCL_DIR /libs/pcl-pcl-1.9.1)
+
 ## System dependencies are found with CMake's conventions
 find_package(ArrayFire REQUIRED)
+##find_package(PCL REQUIRED)
 find_package(CUDA)
 
 
@@ -125,6 +128,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
   include
+  ##/usr/local/include/pcl-1.9
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -213,6 +217,7 @@ endif()
 add_executable(gridmap_test src/gridmap_test.cpp)
 add_executable(laser_to_gridmap src/laser_to_gridmap.cpp)
 add_executable(pcl_to_gridmap src/pcl_to_gridmap.cpp)
+add_executable(kinect_to_gridmap src/kinect_to_gridmap.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -228,6 +233,12 @@ add_dependencies(pcl_to_gridmap ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(laser_to_gridmap
+  gridmap
+  conversions
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(kinect_to_gridmap
   gridmap
   conversions
   ${catkin_LIBRARIES}

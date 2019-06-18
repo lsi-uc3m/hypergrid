@@ -1,9 +1,9 @@
 <launch>
     <arg name="vehicle" default="icab1" />
 
-    <node pkg="hypergrid" type="pcl_to_gridmap" name="kinect_to_gridmap" output="screen">
+    <node pkg="hypergrid" type="kinect_to_gridmap" name="kinect_to_gridmap" output="screen">
         <rosparam command="load" file="$(find hypergrid)/config/kinect_to_gridmap.yaml"/>
         <param name="map_frame_id" value="$(arg vehicle)/base_footprint" />
-        <remap from="velodyne_points" to="/$(arg vehicle)/velodyne_points" />
+        <remap from="kinect2/sd/points" to="/$(arg vehicle)/kinect2/sd/points" />
     </node>
 </launch>
