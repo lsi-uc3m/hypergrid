@@ -5,4 +5,4 @@ DEBUG: true
 floor_filter: true
 heightmap_threshold: 0.15
 max_height: 2.5
-dis_VW: 6.0
+dis_VW: 10.0

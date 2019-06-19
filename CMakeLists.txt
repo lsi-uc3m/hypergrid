@@ -140,6 +140,7 @@ add_library(gridmap
 add_library(conversions
   src/hypergrid/conversions/laserscan_converter.cpp
   src/hypergrid/conversions/lidar_converter.cpp
+  src/hypergrid/conversions/kinect_converter.cpp
 )
 
 add_library(hypergrid_layer src/costmap_layer.cpp)
