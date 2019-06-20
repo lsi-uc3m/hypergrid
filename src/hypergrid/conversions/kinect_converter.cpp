@@ -79,10 +79,13 @@ GridMap KINECTConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::
     seg_.setInputCloud(cloud_xyz);
     seg_.segment(*inliers, *coefficients);
 
+    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin_, map_frame_id_);
+
+
     if (inliers->indices.size() == 0)
     {
         PCL_ERROR ("Could not estimate a planar model for the given dataset.");
-        //return null;
+        return gridmap;
     }
 
     // Filter cloud to eliminate detected ground points
@@ -107,7 +110,6 @@ GridMap KINECTConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::
 
 
 
-    hypergrid::GridMap gridmap(width_, height_, cell_size_, origin_, map_frame_id_);
 
     tf::Vector3 trans = transform.getOrigin();   
 
@@ -170,7 +172,9 @@ GridMap KINECTConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::
 
     // creating the VW to add free space at the back of the car 
     //getting the length of the VW
-    int length = round ( 2 * ( dis_VW_ * tan( PI * 30 /180) ) );
+    int length = round ( 2 * ( dis_VW_ * tan( PI * 35.3 /180) ) ) / cell_size_;
+    std::cout << "Length : " << dis_VW_ << std::endl;
+
     //getting the poistion of VW in x axis in cell cords
     int vw_x = (width_/cell_size_) - dis_VW_/cell_size_;
 

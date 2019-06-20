@@ -56,6 +56,7 @@ private:
     double width;
     double height;
     double cell_size; 
+    double dis_VW; 
     double heightmap_threshold;
     double heightmap_cell_size;
     double max_height;

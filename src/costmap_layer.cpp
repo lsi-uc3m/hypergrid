@@ -39,7 +39,7 @@ void HypergridLayer::onInitialize()
     private_nh.getParam("lidar_topics", lidar_topics);
     std::cout << "lidar topics size: " <<  lidar_topics.size() << std::endl;
     private_nh.getParam("kinect_topics", kinect_topics);
-    private_nh.param("dis_VW", cell_size, 6.0);
+    private_nh.param("dis_VW", dis_VW, 6.0);
 
 
     geometry_msgs::Pose origin;
@@ -66,7 +66,7 @@ void HypergridLayer::onInitialize()
                                                     max_height ,
                                                     vehicle_box_size, DEBUG);
 
-    kinect_converter = hypergrid::KINECTConverter kinect_converter(map_width, map_height, cell_size,
+    kinect_converter = new hypergrid::KINECTConverter(width, height, cell_size,
                                               origin,
                                               map_frame_id,
                                               max_height,
@@ -243,7 +243,7 @@ void HypergridLayer::kinect_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     auto t0 = std::chrono::high_resolution_clock::now();
     
 
-    tf::StampedTransform lidar_footprint_transform;
+    tf::StampedTransform kinect_footprint_transform;
     try
     {
         tf_listener_->lookupTransform(map_frame_id, cloud_msg->header.frame_id, ros::Time(0), kinect_footprint_transform);
