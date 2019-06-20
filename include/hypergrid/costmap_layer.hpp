@@ -10,6 +10,7 @@
 #include <hypergrid/gridmap.hpp>
 #include <hypergrid/conversions/laserscan_converter.hpp>
 #include <hypergrid/conversions/lidar_converter.hpp>
+#include <hypergrid/conversions/kinect_converter.hpp>
 
 namespace hypergrid
 {
@@ -33,6 +34,8 @@ public:
 
     void laser_callback(const sensor_msgs::LaserScanPtr scan_msg);
     void lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
+    void kinect_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
+
 
     
 
@@ -40,12 +43,15 @@ private:
     std::vector<GridMap> new_maps_;
     std::vector<ros::Subscriber> laserscan_subs_;
     std::vector<ros::Subscriber> lidar_subs_;
+    std::vector<ros::Subscriber> kinect_subs_;
     ros::Publisher merged_map_pub;
     std::vector<std::string> laser_topics;
     std::vector<std::string> lidar_topics;
+    std::vector<std::string> kinect_topics;
     tf::TransformListener* tf_listener_;
     hypergrid::LaserScanConverter* laser_converter;
     hypergrid::LIDARConverter* lidar_converter;
+    hypergrid::KINECTConverter* kinect_converter;
 
     double width;
     double height;

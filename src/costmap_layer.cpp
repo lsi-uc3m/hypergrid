@@ -38,6 +38,8 @@ void HypergridLayer::onInitialize()
     std::cout << "laser topics size: " <<  laser_topics.size() << std::endl;
     private_nh.getParam("lidar_topics", lidar_topics);
     std::cout << "lidar topics size: " <<  lidar_topics.size() << std::endl;
+    private_nh.getParam("kinect_topics", kinect_topics);
+    private_nh.param("dis_VW", cell_size, 6.0);
 
 
     geometry_msgs::Pose origin;
@@ -64,6 +66,13 @@ void HypergridLayer::onInitialize()
                                                     max_height ,
                                                     vehicle_box_size, DEBUG);
 
+    kinect_converter = hypergrid::KINECTConverter kinect_converter(map_width, map_height, cell_size,
+                                              origin,
+                                              map_frame_id,
+                                              max_height,
+                                              DEBUG,
+                                              dis_VW);                                                
+
     laserscan_subs_.resize(laser_topics.size());
     
     for (int i = 0; i < laser_topics.size(); ++i)
@@ -79,6 +88,14 @@ void HypergridLayer::onInitialize()
         if (DEBUG) std::cout << "Subscribed to " << lidar_subs_[i].getTopic() << std::endl;
     }
 
+    kinect_subs_.resize(kinect_topics.size());
+    for (int i = 0; i < kinect_topics.size(); ++i)
+    {
+        kinect_subs_[i] = public_nh.subscribe(kinect_topics[i], 5, &HypergridLayer::kinect_callback, this);
+        if (DEBUG) std::cout << "Subscribed to " << kinect_subs_[i].getTopic() << std::endl;
+    }
+
+    
     merged_map_pub = public_nh.advertise<nav_msgs::OccupancyGrid>("hypergrid/laser_to_mergedgridmap", 2);
 
 }
@@ -215,6 +232,33 @@ void HypergridLayer::lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     auto end = std::chrono::high_resolution_clock::now();
     double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
     std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_lidar_callback.csv", std::ios_base::app);
+    time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
+    time_file.close();
+  
+}
+
+
+void HypergridLayer::kinect_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
+{
+    auto t0 = std::chrono::high_resolution_clock::now();
+    
+
+    tf::StampedTransform lidar_footprint_transform;
+    try
+    {
+        tf_listener_->lookupTransform(map_frame_id, cloud_msg->header.frame_id, ros::Time(0), kinect_footprint_transform);
+    }
+    catch(tf::TransformException &ex)
+    {
+        ROS_ERROR("%s", ex.what());
+        return;
+    }
+
+    new_maps_.push_back(kinect_converter->convert(cloud_msg, kinect_footprint_transform));
+
+    auto end = std::chrono::high_resolution_clock::now();
+    double tt = std::chrono::duration_cast<std::chrono::nanoseconds>(end - t0).count();
+    std::ofstream time_file(TIMING_PATH + "/hypergrid_layer_kinect_callback.csv", std::ios_base::app);
     time_file << tt << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << std::endl;
     time_file.close();
   
