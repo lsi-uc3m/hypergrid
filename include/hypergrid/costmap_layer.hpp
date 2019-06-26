@@ -6,6 +6,8 @@
 #include <costmap_2d/layer.h>
 #include <costmap_2d/layered_costmap.h>
 #include <costmap_2d/GenericPluginConfig.h>
+#include <nav_msgs/Odometry.h>
+
 
 #include <hypergrid/gridmap.hpp>
 #include <hypergrid/conversions/laserscan_converter.hpp>
@@ -35,23 +37,31 @@ public:
     void laser_callback(const sensor_msgs::LaserScanPtr scan_msg);
     void lidar_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
     void kinect_callback(sensor_msgs::PointCloud2Ptr cloud_msg);
+    void odom_callback(nav_msgs::OdometryPtr odom_msg);
 
 
     
 
 private:
     std::vector<GridMap> new_maps_;
+    nav_msgs::OdometryPtr odom;
+    std::vector<std::pair<std::pair<sensor_msgs::LaserScanPtr, nav_msgs::OdometryPtr>,tf::StampedTransform>> laser_msgs;
+    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> lidar_msgs;
+    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> kinect_msgs;
     std::vector<ros::Subscriber> laserscan_subs_;
     std::vector<ros::Subscriber> lidar_subs_;
     std::vector<ros::Subscriber> kinect_subs_;
+    ros::Subscriber odom_sub_;
     ros::Publisher merged_map_pub;
     std::vector<std::string> laser_topics;
     std::vector<std::string> lidar_topics;
     std::vector<std::string> kinect_topics;
+    std::string odom_topic;
     tf::TransformListener* tf_listener_;
     hypergrid::LaserScanConverter* laser_converter;
     hypergrid::LIDARConverter* lidar_converter;
     hypergrid::KINECTConverter* kinect_converter;
+    int size_saved;
 
     double width;
     double height;
