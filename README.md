@@ -13,7 +13,7 @@ Hypergrid is a ROS package for building local maps from multiple sensors in the 
 Hypergrid is packaged with catkin and provides several libraries to work with grid maps and to convert the raw sensor data to this format.
 
 ### Costmap Plugin
-The main contribution of this package is a [costmap_2d](http://wiki.ros.org/costmap_2d/) plugin, meant to replace the default *obstacle_layer* inside the *local_costmap* of *move_base*. The typical +local_costmap_params.yaml* configuration file can be configured as follows:
+The main contribution of this package is a [costmap_2d](http://wiki.ros.org/costmap_2d/) plugin, meant to replace the default *obstacle_layer* inside the *local_costmap* of *move_base*. The typical *local_costmap_params.yaml* configuration file can be configured as follows:
 
 ```yaml
 local_costmap:
