@@ -75,7 +75,6 @@ GridMap::GridMap(GridMap&& other_map) noexcept :
     width_ = other_map.getWidth();
     height_ = other_map.getHeight();
     cell_size_ = other_map.getCellSize();
-
 }
 
 /* Assignement operator */

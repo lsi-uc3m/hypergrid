@@ -59,16 +59,15 @@ GridMap LaserScanConverter::convert(const sensor_msgs::LaserScan& scan_msg, cons
     af::array obstacle_coords = gridmap.cellCoordsFromLocal(obstacles);
 
     // Remove outside obstacles
-   
-    //ussing the sort function only to get the indices array
+    // Use the sort function only to get the indices array
     af::array cond;
     af::array indices_inside;
     af::sort(cond, indices_inside, gridmap.isCellInside(obstacle_coords), 0, false);
 
-    // getting ony the indices of the obstacles
+    // Get ony the indices of the obstacles
     indices_inside = indices_inside(af::seq(af::sum(cond).scalar<unsigned>()));
 
-    //inside_obstacles_coords = inside_obstacles_coords(af::seq(num_obs_inside), af::span);
+    // inside_obstacles_coords = inside_obstacles_coords(af::seq(num_obs_inside), af::span);
     
     af::array inside_obstacles_coords = af::lookup(obstacle_coords(af::span, af::seq(2)), indices_inside);
    
@@ -80,8 +79,8 @@ GridMap LaserScanConverter::convert(const sensor_msgs::LaserScan& scan_msg, cons
     hypergrid::Cell start = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
     gridmap.addFreeLines(start, inside_obstacles_coords);
 
-    //if (DEBUG_) std::cout << "Set free lines time: " << ros::Time::now() - t0 << std::endl;
-    //t0 = ros::Time::now();
+    if (DEBUG_) std::cout << "Set free lines time: " << ros::Time::now() - t0 << std::endl;
+    t0 = ros::Time::now();
 
     // Set the obstacles in the map
     af::array indices = inside_obstacles_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + inside_obstacles_coords(af::span, 0).as(s32);

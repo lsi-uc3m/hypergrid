@@ -14,6 +14,7 @@
 #include <hypergrid/conversions/lidar_converter.hpp>
 #include <hypergrid/conversions/kinect_converter.hpp>
 
+
 namespace hypergrid
 {
 
@@ -44,40 +45,47 @@ public:
 
 private:
     std::vector<GridMap> new_maps_;
-    nav_msgs::OdometryPtr odom;
-    std::vector<std::pair<std::pair<sensor_msgs::LaserScanPtr, nav_msgs::OdometryPtr>,tf::StampedTransform>> laser_msgs;
-    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> lidar_msgs;
-    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> kinect_msgs;
+    nav_msgs::OdometryPtr current_odom_;
+
+    std::vector<std::pair<std::pair<sensor_msgs::LaserScanPtr, nav_msgs::OdometryPtr>,tf::StampedTransform>> laser_msgs_;
+    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> lidar_msgs_;
+    std::vector<std::pair<std::pair<sensor_msgs::PointCloud2Ptr, nav_msgs::OdometryPtr>,tf::StampedTransform>> kinect_msgs_;
+
     std::vector<ros::Subscriber> laserscan_subs_;
     std::vector<ros::Subscriber> lidar_subs_;
     std::vector<ros::Subscriber> kinect_subs_;
     ros::Subscriber odom_sub_;
-    ros::Publisher merged_map_pub;
-    std::vector<std::string> laser_topics;
-    std::vector<std::string> lidar_topics;
-    std::vector<std::string> kinect_topics;
-    std::string odom_topic;
+
+    ros::Publisher merged_map_pub_;
+
+    std::vector<std::string> laser_topics_;
+    std::vector<std::string> lidar_topics_;
+    std::vector<std::string> kinect_topics_;
+    std::string odom_topic_;
+
     tf::TransformListener* tf_listener_;
-    hypergrid::LaserScanConverter* laser_converter;
-    hypergrid::LIDARConverter* lidar_converter;
-    hypergrid::KINECTConverter* kinect_converter;
-    int size_saved;
 
-    double width;
-    double height;
-    double cell_size; 
-    double dis_VW; 
-    double heightmap_threshold;
-    double heightmap_cell_size;
-    double max_height;
-    double vehicle_box_size;
-    std::string map_frame_id;
-    bool DEBUG;
+    hypergrid::LaserScanConverter* laser_converter_;
+    hypergrid::LIDARConverter* lidar_converter_;
+    hypergrid::KINECTConverter* kinect_converter_;
 
+    double width_;
+    double height_;
+    double cell_size_;
 
+    int accumulation_queue_size_;
+    double dis_VW_;
+
+    double heightmap_threshold_;
+    double heightmap_cell_size_;
+    double max_height_;
+    double vehicle_box_size_;
     bool rolling_window_;
-    
-    // TODO
+    std::string map_frame_id_;
+    bool DEBUG_;
 };
-}
+
+
+} // hypergrid namespace
+
 #endif
