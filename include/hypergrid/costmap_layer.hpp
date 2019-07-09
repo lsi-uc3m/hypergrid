@@ -11,6 +11,7 @@
 #include <hypergrid/conversions/laserscan_converter.hpp>
 #include <hypergrid/conversions/lidar_converter.hpp>
 
+
 namespace hypergrid
 {
 
@@ -40,27 +41,27 @@ private:
     std::vector<GridMap> new_maps_;
     std::vector<ros::Subscriber> laserscan_subs_;
     std::vector<ros::Subscriber> lidar_subs_;
-    ros::Publisher merged_map_pub;
-    std::vector<std::string> laser_topics;
-    std::vector<std::string> lidar_topics;
+    ros::Publisher merged_map_pub_;
+    std::vector<std::string> laser_topics_;
+    std::vector<std::string> lidar_topics_;
     tf::TransformListener* tf_listener_;
-    hypergrid::LaserScanConverter* laser_converter;
-    hypergrid::LIDARConverter* lidar_converter;
+    hypergrid::LaserScanConverter* laser_converter_;
+    hypergrid::LIDARConverter* lidar_converter_;
 
-    double width;
-    double height;
-    double cell_size; 
-    double heightmap_threshold;
-    double heightmap_cell_size;
-    double max_height;
-    double vehicle_box_size;
-    std::string map_frame_id;
-    bool DEBUG;
-
-
+    double width_;
+    double height_;
+    double cell_size_;
+    double heightmap_threshold_;
+    double heightmap_cell_size_;
+    double max_height_;
+    double vehicle_box_size_;
     bool rolling_window_;
-    
-    // TODO
+    std::string map_frame_id_;
+    bool DEBUG_;
+
 };
-}
+
+
+} // hypergrid namespace
+
 #endif

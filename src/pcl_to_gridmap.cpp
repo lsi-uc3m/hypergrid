@@ -29,7 +29,6 @@ double heightmap_cell_size;
 std::string map_frame_id;
 std::string cloud_topic;
 std::string output_topic;
-std::string frame_vehicle;
 ros::Publisher cloud_map_pub;
 
 // Transform Listener 
@@ -45,7 +44,7 @@ void remove_floor(af::array& cloud)
 
     int height_cells = map_height / heightmap_cell_size;
     int width_cells = map_width / heightmap_cell_size;
- 
+
     af::array x_arr = (width_cells / 2) + (cloud(0, af::span) / heightmap_cell_size);
     af::array y_arr = (height_cells / 2) + (cloud(1, af::span) / heightmap_cell_size);
     af::array z_arr = cloud(2, af::span);
@@ -56,7 +55,7 @@ void remove_floor(af::array& cloud)
     // Resize the cloud to make it non-organized and work faster
     int width = cloud.dims(0) * cloud.dims(1);
     int height = 1;
-    
+
     // Init maps
     for (int i = 0; i < width_cells; ++i)
     {
@@ -103,14 +102,13 @@ void remove_floor(af::array& cloud)
     delete[] min;
     delete[] max;
     cloud = af::lookup(cloud, indices_arr, 1);
-   
 }
 
 void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
 {
     ros::Time t0 = ros::Time::now();
     ros::Time t_start = t0;
-   
+
     tf::StampedTransform pcl_footprint_transform;
     try
     {
@@ -127,12 +125,10 @@ void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     origin.orientation.w = 1;
 
     hypergrid::LIDARConverter lidar_converter(map_width, map_height, cell_size,
-                                              origin,
-                                              map_frame_id,
+                                              origin, map_frame_id,
                                               heightmap_threshold,
                                               heightmap_cell_size,
-                                              max_height,
-                                              vehicle_box_size,
+                                              max_height, vehicle_box_size,
                                               DEBUG);
 
     hypergrid::GridMap gridmap = lidar_converter.convert(cloud_msg, pcl_footprint_transform);
@@ -141,10 +137,8 @@ void cloud_callback(sensor_msgs::PointCloud2Ptr cloud_msg)
     cloud_map_pub.publish(gridmap.toMapMsg());
     if (DEBUG) std::cout << "Publish time: " << ros::Time::now() - t0 << std::endl;
     if (DEBUG) std::cout << "Callback time: " << ros::Time::now() - t_start << std::endl;
-
-    
-
 }
+
 
 int main(int argc, char  **argv)
 {
@@ -153,7 +147,6 @@ int main(int argc, char  **argv)
     ros::init(argc, argv, "pcl_to_gridmap");
     ros::NodeHandle nh, priv_nh("~");
 
-    
     priv_nh.param<std::string>("map_frame_id", map_frame_id, "base_footprint");
     priv_nh.param("height", map_height, 50.0);
     priv_nh.param("width", map_width, 50.0);
@@ -167,8 +160,6 @@ int main(int argc, char  **argv)
 
     cloud_map_pub = nh.advertise<nav_msgs::OccupancyGrid>("hypergrid/pcl_to_gridmap", 2);
     ros::Subscriber cloud_sub = nh.subscribe("velodyne_points", 5, cloud_callback);
-
-   
 
     tf_listener = new tf::TransformListener();
    

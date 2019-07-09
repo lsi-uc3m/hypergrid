@@ -53,7 +53,7 @@ void add_lines(af::array& grid, int value,
     // Obtain raw pointer from array object
     int *device_end_x = endpoints(af::span, 0).device<int>();
     int *device_end_y = endpoints(af::span, 1).device<int>();
-    
+
     // Remove duplicated endpoints
     size_t lut_size = grid.dims(0) * grid.dims(1);
     std::vector<bool> index_lut(lut_size, false);
@@ -74,7 +74,7 @@ void add_lines(af::array& grid, int value,
         }
     }
 
-    int n_threads = 8;
+    int n_threads = std::thread::hardware_concurrency();
     int splitted_size = (unique_end_x.size() + n_threads - 1) / n_threads;
 
     std::vector<std::thread> thread_pool;
