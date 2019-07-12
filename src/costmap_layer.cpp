@@ -55,7 +55,6 @@ void HypergridLayer::onInitialize()
                                                      vehicle_box_size_, DEBUG_);
 
     laserscan_subs_.resize(laser_topics_.size());
-    
     for (int i = 0; i < laser_topics_.size(); ++i)
     {
         laserscan_subs_[i] = public_nh.subscribe(laser_topics_[i], 5, &HypergridLayer::laser_callback, this);
@@ -111,7 +110,7 @@ void HypergridLayer::updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, 
         ROS_WARN("Now new map received yet: costmap will NOT be updated");
         return;
     }
-    else if (DEBUG_) std::cout << "size   : " << new_maps_.size() << std::endl;
+    else if (DEBUG_) std::cout << "Number of maps: " << new_maps_.size() << std::endl;
     
   
     hypergrid::GridMap Merged_gridmap = new_maps_[0];

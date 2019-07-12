@@ -88,29 +88,11 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     }
 
     pcl_points.eval();
-    af::array obs = (af::join(0,pcl_points(af::seq(2), af::span), ones(af::span, af::seq(pcl_points.dims(1) )))).as(f64) ;
+    af::array obs = (af::join(0, pcl_points(af::seq(2), af::span), ones(af::span, af::seq(pcl_points.dims(1) )))).as(f64);
 
     pcl_points = pcl_points.T();
-    af::array obstacle_coords =  gridmap.cellCoordsFromLocal(obs.T());
+    af::array obstacle_coords = gridmap.cellCoordsFromLocal(obs.T())(af::span, af::seq(2));
 
-    af::array conds =   (
-                            !(  (af::isInf(pcl_points(af::span, 0))) ||
-                                (af::isInf(pcl_points(af::span, 1))) ||
-                                (af::isInf(pcl_points(af::span, 2)))
-                            )
-                            && pcl_points(af::span, 2) < max_height_
-                            && gridmap.isCellInside(obstacle_coords)
-                        );
-
-    // Use the sort function only to get the indices array
-    af::array out;
-    af::array indices_inside;
-    af::sort(out, indices_inside, conds, 0, false);
-
-    // Get only the indices of the obstacles
-    indices_inside = indices_inside(af::seq(af::sum(conds).scalar<unsigned>()));
-
-    af::array inside_obstacles_coords = af::lookup(obstacle_coords(af::span, af::seq(2)), indices_inside);
     if (DEBUG_)
     {
         std::cout << "Remove outside obstacles time: " << std::fixed
@@ -119,12 +101,10 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
         start = std::chrono::high_resolution_clock::now();
     }
 
-    tf::Vector3 trans = transform.getOrigin();
-
     // Add a free line to each obstacle inside the grid
     // Set the origin of the lines at the sensor point
-    hypergrid::Cell start_cell = gridmap.cellCoordsFromLocal(trans.getX(), trans.getY());
-    gridmap.addFreeLines(start_cell, inside_obstacles_coords);   
+    hypergrid::Cell start_cell = gridmap.cellCoordsFromLocal(transform.getOrigin().getX(), transform.getOrigin().getY());
+    gridmap.addFreeLines(start_cell, obstacle_coords);
 
     if (DEBUG_)
     {
@@ -135,7 +115,7 @@ GridMap LIDARConverter::convert(sensor_msgs::PointCloud2& cloud_msg, const tf::S
     }
 
     // Set the obstacles in the map
-    af::array indices = inside_obstacles_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + inside_obstacles_coords(af::span, 0).as(s32);
+    af::array indices = obstacle_coords(af::span, 1).as(s32) * gridmap.grid.dims(0) + obstacle_coords(af::span, 0).as(s32);
     gridmap.grid(indices) = hypergrid::GridMap::OBSTACLE;
 
     if (DEBUG_)
@@ -157,7 +137,6 @@ GridMap LIDARConverter::convert( sensor_msgs::PointCloud2Ptr& cloud_msg, const t
 /* Removes all the points in the floor with a heightmap algorithm */
 void LIDARConverter::remove_floor(af::array& cloud) const
 {
-    if (DEBUG_) std::cout << "points inside revmove floor: " << cloud.dims(1) << std::endl;
     float* x = cloud(0, af::span).host<float>();
     float* y = cloud(1, af::span).host<float>();
     float* z = cloud(2, af::span).host<float>();
@@ -168,13 +147,9 @@ void LIDARConverter::remove_floor(af::array& cloud) const
     af::array x_arr = (width_cells / 2) + (cloud(0, af::span) / heightmap_cell_size_);
     af::array y_arr = (height_cells / 2) + (cloud(1, af::span) / heightmap_cell_size_);
     af::array z_arr = cloud(2, af::span);
-    if (DEBUG_) std::cout << "points inside remove floor: " << cloud.dims(1) << std::endl;
+
     float* min = new float[width_cells * height_cells];
     float* max = new float[width_cells * height_cells];
-
-    // Resize the cloud to make it non-organized and work faster
-    int width = cloud.dims(1);
-    int height = 1;
 
     // Init maps
     for (int i = 0; i < width_cells; ++i)
@@ -187,8 +162,44 @@ void LIDARConverter::remove_floor(af::array& cloud) const
         }
     }
 
-    // Build height map
-    for (int i = 0; i < width; ++i)
+    std::vector<int> indices;
+    // Build height map and remove points outside, too high or inside the vehicle box
+    for (int i = 0; i < cloud.dims(1); ++i)
+    {
+        int x_idx = (width_cells / 2) + (x[i] / heightmap_cell_size_);
+        int y_idx = (height_cells / 2) + (y[i] / heightmap_cell_size_);
+        bool valid_point = ((x_idx >= 0) && (x_idx < width_cells) && (y_idx >= 0) && (y_idx < height_cells)) && // Point is inside the grid
+                           ((z[i] < max_height_))                                                            && // Point is inside height limit
+                           (std::isfinite(x[i]) && std::isfinite(y[i]) && std::isfinite(z[i]))               && // Point is not NaN or Inf
+                           ((abs(x[i]) > vehicle_box_size_) || (abs(y[i]) > vehicle_box_size_));                // Point is not inside the vehicle box
+        if (valid_point)
+        {
+            // Mark the point for removal
+            indices.push_back(i);
+
+            // Add the point to the heightmap
+            if (x_idx >= 0 && x_idx < width_cells && y_idx >= 0 && y_idx < height_cells)
+            {
+                int index = x_idx * height_cells + y_idx;
+                min[index] = std::min<float>(min[index], z[i]);
+                max[index] = std::max<float>(max[index], z[i]);
+            }
+        }
+    }
+
+    af::array indices_arr(indices.size(), indices.data());
+    delete[] x;
+    delete[] y;
+    delete[] z;
+    cloud = af::lookup(cloud, indices_arr, 1);
+    cloud.eval();
+    indices.clear();
+
+    x = cloud(0, af::span).host<float>();
+    y = cloud(1, af::span).host<float>();
+
+    // Remove the floor points
+    for (int i = 0; i < cloud.dims(1); ++i)
     {
         int x_idx = (width_cells / 2) + (x[i] / heightmap_cell_size_);
         int y_idx = (height_cells / 2) + (y[i] / heightmap_cell_size_);
@@ -196,29 +207,16 @@ void LIDARConverter::remove_floor(af::array& cloud) const
         if (x_idx >= 0 && x_idx < width_cells && y_idx >= 0 && y_idx < height_cells)
         {
             int index = x_idx * height_cells + y_idx;
-            min[index] = std::min<float>(min[index], z[i]);
-            max[index] = std::max<float>(max[index], z[i]);
+            if ((max[index] - min[index]) > heightmap_threshold_)
+            {
+                indices.push_back(i);
+            }
         }
     }
 
-    std::vector<int> indices;
-    for (int i = 0; i < width; ++i)
-    {
-        int x_idx = (width_cells / 2) + (x[i] / heightmap_cell_size_);
-        int y_idx = (height_cells / 2) + (y[i] / heightmap_cell_size_);
-        int index = x_idx * height_cells + y_idx;
-
-        bool is_obstacle = ((x_idx >= 0) && (x_idx < width_cells) && (y_idx >= 0) && (y_idx < height_cells)) && // Point is inside the grid
-                           ((z[i] < max_height_))                                                            && // Point is inside height limit
-                           ((abs(x[i]) > vehicle_box_size_) || (abs(y[i]) > vehicle_box_size_))              && // Point is not inside the vehicle box
-                           ((max[index] - min[index]) > heightmap_threshold_);                                  // Point is inside a cell considered obstacle by the heightmap
-        if (is_obstacle) indices.push_back(i);
-    }
-
-    af::array indices_arr(indices.size(), indices.data());
+    indices_arr = af::array(indices.size(), indices.data());
     delete[] x;
     delete[] y;
-    delete[] z;
     delete[] min;
     delete[] max;
 
